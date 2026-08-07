@@ -104,7 +104,8 @@ try {
   --breadcrumb-h: 40px;
   --content-px: 24px;
   --content-py: 24px;
-  --sidebar-w: 200px;
+  --nav-sidebar-w: 220px;
+  --side-breadcrumb-left: 288px;
 
   /* Z-index */
   --z-content: 0;
@@ -240,15 +241,15 @@ tbody td {
 .header-logo {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-2);
   padding-right: var(--space-6);
   margin-right: var(--space-2);
   border-right: 1px solid var(--border-subtle);
 }
 
 .header-logo-icon {
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
   border-radius: 10px;
   background: linear-gradient(145deg, #061D35 0%, #0B2B4F 35%, #114480 100%);
   border: 1px solid rgba(23, 118, 229, 0.3);
@@ -264,16 +265,16 @@ tbody td {
 }
 
 .header-logo-icon svg {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
 }
 
 .header-logo-title {
   font-family: 'Alimama ShuHeiTi', var(--font-sans);
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 700;
   color: var(--text-primary);
-  letter-spacing: 2px;
+  letter-spacing: 1px;
 }
 
 .header-nav {
@@ -528,7 +529,7 @@ tbody td {
   top: var(--header-h);
   bottom: 0;
   left: 0;
-  width: var(--sidebar-w);
+  width: var(--nav-sidebar-w);
   height: auto;
   padding: var(--space-4) var(--space-3);
   flex-direction: column;
@@ -587,9 +588,20 @@ tbody td {
   transform: translateX(0);
 }
 
-:root[data-nav-layout="side"] .breadcrumb,
+:root[data-nav-layout="side"] .breadcrumb {
+  top: 0;
+  left: var(--side-breadcrumb-left);
+  right: 180px;
+  height: var(--header-h);
+  padding: 0;
+  background: transparent;
+  border-bottom: 0;
+  z-index: calc(var(--z-header) + 1);
+}
+
 :root[data-nav-layout="side"] .content {
-  left: var(--sidebar-w);
+  left: var(--nav-sidebar-w);
+  top: var(--header-h);
 }
 
 :root[data-nav-layout="side"] .header-logo {
