@@ -1,0 +1,3856 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>资源池管理 - 虚拟电厂智慧运营平台</title>
+<script>
+try {
+  document.documentElement.dataset.theme = localStorage.getItem('vpp-theme') || 'dark';
+  document.documentElement.dataset.navLayout = localStorage.getItem('vpp-nav-layout') || 'top';
+} catch (e) {
+  document.documentElement.dataset.theme = 'dark';
+  document.documentElement.dataset.navLayout = 'top';
+}
+</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+/* ==============================
+   @font-face — 阿里妈妈数黑体（永久免费商用）
+   ============================== */
+@font-face {
+  font-family: "Alimama ShuHeiTi";
+  font-weight: 700;
+  src: url("//at.alicdn.com/wf/webfont/kfq1sgJFWQ6g/cPCrTL8ewntCCMPMNgo40.woff2") format("woff2"),
+       url("//at.alicdn.com/wf/webfont/kfq1sgJFWQ6g/fu9Q_dW8qzsGtfSSU60a3.woff") format("woff");
+  font-display: swap;
+}
+
+/* ==============================
+   CSS 变量 — 引用颜色/排版/间距/圆角规范
+   ============================== */
+:root {
+  /* 页面背景 */
+  --page-bg: #0A1929;
+  --card-bg: #0D2137;
+  --card-bg-alt: #0F2640;
+
+  /* 固定列不透明背景（表格规范 §12.2） */
+  --fixed-bg-default: #0D2137;
+  --fixed-bg-hover: #0E2845;
+  --fixed-bg-selected: #0F2C4E;
+  --fixed-bg-header: #132D4A;
+
+  /* 固定列阴影边界（表格规范 §12.4） */
+  --fixed-shadow-right: 6px 0 12px -2px rgba(255,255,255,0.12);
+  --fixed-shadow-left: -6px 0 12px -2px rgba(255,255,255,0.12);
+  --fixed-shadow-color: rgba(255,255,255,0.12);
+
+  /* 边框 */
+  --border-subtle: rgba(255,255,255,0.06);
+  --border-divider: rgba(255,255,255,0.08);
+  --border-default: rgba(255,255,255,0.10);
+  --border-hover: rgba(255,255,255,0.15);
+  --border-active: rgba(22,104,220,0.30);
+  --border-secondary: rgba(22,104,220,0.45);
+  --border-secondary-hover: rgba(22,104,220,0.55);
+  --border-secondary-active: rgba(22,104,220,0.60);
+
+  /* 文本 */
+  --text-primary: #E8F0FC;
+  --text-secondary: #A3B8D0;
+  --text-muted: #6B8AAB;
+  --text-disabled: #4A5A70;
+  --text-label: #7A96B8;
+
+  /* 主色 */
+  --primary-300: #7FB3EF;
+  --primary-400: #4897F3;
+  --primary-500: #1776E5;
+  --primary-600: #095AB8;
+
+  /* 语义色 */
+  --green-500: #00D68F;
+  --orange-500: #FFB547;
+  --red-500: #FF5757;
+  --red-400: #FF7070;
+  --red-700: #C03838;
+  --violet-500: #7C5CFF;
+  --cyan-500: #00D4FF;
+
+  /* 字体 */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Noto Sans SC", sans-serif;
+  --font-mono: "SF Mono", "Fira Code", "JetBrains Mono", Consolas, monospace;
+
+  /* 间距 */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* 圆角 */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* 布局 */
+  --header-h: 56px;
+  --breadcrumb-h: 40px;
+  --content-px: 24px;
+  --content-py: 24px;
+  --nav-sidebar-w: 220px;
+
+  /* Z-index */
+  --z-content: 0;
+  --z-fixed-cell: 1;
+  --z-sticky: 1;
+  --z-table-header: 2;
+  --z-fixed-corner: 3;
+  --z-sidebar: 100;
+  --z-header: 200;
+  --z-dropdown: 1000;
+  --z-drawer: 1200;
+  --z-modal: 1300;
+  --z-modal-mask: 1299;
+  --z-toast: 1400;
+}
+
+:root[data-theme="light"] {
+  --page-bg: #F3F7FC;
+  --card-bg: #FFFFFF;
+  --card-bg-alt: #F7FAFE;
+
+  --fixed-bg-default: #FFFFFF;
+  --fixed-bg-hover: #F3F8FF;
+  --fixed-bg-selected: #EAF3FF;
+  --fixed-bg-header: #E5EDF7;
+  --fixed-shadow-right: 6px 0 12px -2px rgba(23,43,67,0.16);
+  --fixed-shadow-left: -6px 0 12px -2px rgba(23,43,67,0.16);
+  --fixed-shadow-color: rgba(23,43,67,0.10);
+
+  --border-subtle: rgba(23,43,67,0.08);
+  --border-divider: rgba(23,43,67,0.12);
+  --border-default: rgba(23,43,67,0.16);
+  --border-hover: rgba(23,43,67,0.24);
+  --border-active: rgba(22,104,220,0.38);
+
+  --text-primary: #172B43;
+  --text-secondary: #4F647A;
+  --text-muted: #75879A;
+  --text-disabled: #A8B4C0;
+  --text-label: #60758B;
+}
+
+:root[data-theme="light"] .header-submenu,
+:root[data-theme="light"] .dropdown-panel,
+:root[data-theme="light"] .cascader-panel {
+  background: #FFFFFF;
+  border-color: var(--border-default);
+  box-shadow: 0 8px 24px rgba(23,43,67,0.14);
+}
+
+/* ==============================
+   全局重置
+   ============================== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  background-color: var(--page-bg);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  height: 100vh;
+  overflow: hidden;
+}
+
+body,
+.header,
+.breadcrumb,
+.content,
+.header-nav,
+.filter-section,
+.table-container,
+.modal,
+.dropdown-panel,
+.cascader-panel,
+thead th,
+tbody td {
+  transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease;
+}
+
+/* 滚动条 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.10);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.15);
+}
+
+:root[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: rgba(23,43,67,0.16);
+}
+
+:root[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
+  background: rgba(23,43,67,0.24);
+}
+
+/* ==============================
+   顶栏 Header — 56px 固定导航
+   ============================== */
+.header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: var(--header-h);
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--border-divider);
+  display: flex;
+  align-items: stretch;
+  padding: 0 var(--space-6);
+  z-index: var(--z-header);
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-6);
+}
+
+.header-logo {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-right: var(--space-6);
+  margin-right: var(--space-2);
+  border-right: 1px solid var(--border-subtle);
+}
+
+.header-logo-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background: linear-gradient(145deg, #061D35 0%, #0B2B4F 35%, #114480 100%);
+  border: 1px solid rgba(23, 118, 229, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  box-shadow:
+    0 4px 12px rgba(3, 12, 27, 0.5),
+    0 0 0 1px rgba(23, 118, 229, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.header-logo-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.header-logo-title {
+  font-family: 'Alimama ShuHeiTi', var(--font-sans);
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 1px;
+}
+
+.header-nav {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-1);
+  height: 100%;
+}
+
+.header-nav-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 200ms ease;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+  user-select: none;
+  white-space: nowrap;
+  font-family: var(--font-sans);
+  line-height: 1.4;
+  letter-spacing: 0;
+}
+
+/* 底部霓虹指示条 */
+.header-nav-item::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: linear-gradient(90deg, 
+    transparent 0%, 
+    rgba(72,151,243,0.3) 15%, 
+    #4897F3 35%, 
+    #7FB3EF 50%, 
+    #4897F3 65%, 
+    rgba(72,151,243,0.3) 85%, 
+    transparent 100%);
+  transition: all 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0;
+  filter: blur(0.3px);
+}
+
+/* 顶部电路走线 */
+.header-nav-item::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 22%;
+  right: 22%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(72,151,243,0.35), transparent);
+  transition: all 250ms ease;
+  opacity: 0;
+}
+
+.header-nav-item:hover {
+  color: var(--text-primary);
+  background: rgba(72,151,243,0.06);
+  box-shadow: inset 0 -1px 0 rgba(23,118,229,0.15);
+}
+
+.header-nav-item:hover::after {
+  width: 50%;
+  opacity: 0.6;
+}
+
+.header-nav-item:hover::before {
+  opacity: 0.4;
+}
+
+.header-nav-item.active {
+  margin-bottom: -3px;
+  color: #E8F4FF;
+  background: linear-gradient(180deg, 
+    rgba(23,118,229,0.03) 0%,
+    rgba(23,118,229,0.08) 25%,
+    rgba(23,118,229,0.16) 60%,
+    rgba(23,118,229,0.28) 100%);
+  border-bottom-color: transparent;
+  font-weight: 600;
+  box-shadow: 
+    0 4px 24px -10px rgba(23,118,229,0.32),
+    inset 0 1px 0 rgba(72,151,243,0.14);
+  text-shadow: 0 0 14px rgba(72,151,243,0.14);
+}
+
+:root[data-theme="light"] .header-nav-item.active {
+  color: var(--text-primary);
+  background: linear-gradient(180deg,
+    rgba(23,118,229,0.01) 0%,
+    rgba(23,118,229,0.03) 25%,
+    rgba(23,118,229,0.07) 60%,
+    rgba(23,118,229,0.12) 100%);
+  box-shadow:
+    0 4px 20px -12px rgba(23,118,229,0.16),
+    inset 0 1px 0 rgba(72,151,243,0.08);
+  text-shadow: none;
+}
+
+:root[data-theme="light"] .header-nav-item.active::after {
+  opacity: 0.72;
+  box-shadow: 0 0 8px rgba(23,118,229,0.24);
+}
+
+.header-nav-item.active::before {
+  opacity: 1;
+  background: linear-gradient(90deg, transparent, rgba(72,151,243,0.5), transparent);
+}
+
+.header-nav-item.active::after {
+  width: 80%;
+  opacity: 1;
+  height: 2px;
+  filter: blur(0px);
+  box-shadow: 
+    0 0 6px rgba(23,118,229,0.6),
+    0 0 18px rgba(23,118,229,0.35),
+    0 0 36px rgba(23,118,229,0.15),
+    0 1px 0 rgba(23,118,229,0.4);
+}
+
+/* ==============================
+   二级菜单下拉面板
+   ============================== */
+.header-nav-dropdown {
+  position: relative;
+}
+
+.header-submenu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  min-width: 160px;
+  background: linear-gradient(180deg, #0F1D32 0%, #0C182B 100%);
+  border: 1px solid rgba(23,118,229,0.25);
+  border-top: none;
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+  box-shadow: 
+    0 8px 32px rgba(0,0,0,0.5),
+    0 0 20px -4px rgba(23,118,229,0.15);
+  padding: var(--space-2) 0;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: calc(var(--z-header) + 1);
+  pointer-events: none;
+}
+
+.header-nav-dropdown:hover .header-submenu,
+.header-nav-dropdown:focus-within .header-submenu,
+.header-nav-dropdown.open .header-submenu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.header-submenu-item {
+  display: flex;
+  align-items: center;
+  min-height: 38px;
+  margin: 2px 6px;
+  padding: 0 16px 0 28px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 150ms ease;
+  white-space: nowrap;
+  position: relative;
+  font-family: var(--font-sans);
+  line-height: 1.4;
+  letter-spacing: 0;
+}
+
+.header-submenu-item::after {
+  content: '';
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--primary-400);
+  opacity: 0;
+  transform: translateY(-50%) scaleY(.5);
+  transition: opacity 160ms ease, transform 160ms ease;
+}
+
+.header-submenu-item:hover {
+  color: #D7E9FF;
+  background: linear-gradient(90deg, rgba(23,118,229,.13), rgba(23,118,229,.05));
+}
+
+.header-submenu-item:hover::after {
+  opacity: 0;
+  transform: translateY(-50%) scaleY(.5);
+}
+
+.header-submenu-item.active {
+  color: #FFFFFF;
+  background: linear-gradient(90deg, rgba(23,118,229,.28), rgba(23,118,229,.12));
+  font-weight: 600;
+  box-shadow: inset 0 0 0 1px rgba(91,160,245,.10);
+}
+
+.header-submenu-item.active::after {
+  opacity: 1;
+  transform: translateY(-50%) scaleY(1);
+}
+
+:root[data-theme="light"] .header-submenu-item:hover {
+  color: #165EA8;
+  background: linear-gradient(90deg, rgba(23,118,229,.09), rgba(23,118,229,.035));
+}
+
+:root[data-theme="light"] .header-submenu-item.active {
+  color: #174F8F;
+  background: linear-gradient(90deg, rgba(23,118,229,.15), rgba(23,118,229,.07));
+  box-shadow: inset 0 0 0 1px rgba(23,118,229,.06);
+}
+
+.header-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.nav-layout-toggle,
+.theme-toggle {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.nav-layout-toggle:hover,
+.theme-toggle:hover {
+  color: var(--primary-400);
+  border-color: var(--border-hover);
+  background: rgba(23,118,229,0.08);
+}
+
+.nav-layout-toggle:focus-visible,
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--border-active);
+  outline-offset: 2px;
+}
+
+.nav-layout-toggle i,
+.theme-toggle i {
+  font-size: 14px;
+}
+
+/* 左侧菜单布局 */
+:root[data-nav-layout="side"] .header-nav {
+  position: fixed;
+  top: var(--header-h);
+  bottom: 0;
+  left: 0;
+  width: var(--nav-sidebar-w);
+  height: auto;
+  padding: var(--space-4) var(--space-3);
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--space-1);
+  background: var(--card-bg);
+  border-right: 1px solid var(--border-divider);
+  z-index: var(--z-sidebar);
+}
+
+:root[data-nav-layout="side"] .header-nav-item {
+  min-height: 40px;
+  padding: 0 var(--space-3);
+  margin: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+:root[data-nav-layout="side"] .header-nav-item.active {
+  margin: 0;
+}
+
+:root[data-nav-layout="side"] .header-nav-item::before {
+  display: none;
+}
+
+:root[data-nav-layout="side"] .header-nav-item::after {
+  top: 50%;
+  bottom: auto;
+  left: 0;
+  width: 2px;
+  height: 56%;
+  transform: translateY(-50%);
+  background: var(--primary-400);
+}
+
+:root[data-nav-layout="side"] .header-nav-item:hover::after {
+  width: 2px;
+}
+
+:root[data-nav-layout="side"] .header-nav-item.active::after {
+  width: 2px;
+  height: 64%;
+}
+
+:root[data-nav-layout="side"] .header-submenu {
+  top: 0;
+  left: calc(100% + var(--space-1));
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  transform: translateX(-4px);
+}
+
+:root[data-nav-layout="side"] .header-nav-dropdown:hover .header-submenu,
+:root[data-nav-layout="side"] .header-nav-dropdown:focus-within .header-submenu,
+:root[data-nav-layout="side"] .header-nav-dropdown.open .header-submenu {
+  transform: translateX(0);
+}
+
+:root[data-nav-layout="side"] .content {
+  left: var(--nav-sidebar-w);
+  top: var(--header-h);
+}
+
+:root[data-nav-layout="side"] .header-logo {
+  border-right: none;
+}
+
+.header-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--primary-500), var(--violet-500));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #FFFFFF;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.header-avatar:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 0 2px rgba(23,118,229,0.30);
+}
+
+.header-avatar-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.header-avatar-arrow {
+  font-size: 10px;
+  color: var(--text-muted);
+  transition: transform 200ms ease;
+}
+
+.header-avatar-wrapper.open .header-avatar-arrow {
+  transform: rotate(180deg);
+}
+
+.dropdown-divider {
+  height: 1px;
+  background: var(--border-divider);
+  margin: 2px 8px;
+}
+
+/* ==============================
+   面包屑 — 40px
+   ============================== */
+.breadcrumb {
+  position: static;
+  flex: 0 0 auto;
+  height: var(--breadcrumb-h);
+  min-height: var(--breadcrumb-h);
+  background: transparent;
+  border-bottom: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  padding: 0;
+  margin: calc(var(--content-py) * -1) 0 var(--space-4);
+}
+
+.breadcrumb-list {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 12px;
+}
+
+.breadcrumb-item {
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 150ms ease;
+}
+
+.breadcrumb-item:hover {
+  color: var(--primary-400);
+}
+
+.breadcrumb-item.current {
+  color: var(--text-secondary);
+  cursor: default;
+}
+
+.breadcrumb-item.current:hover {
+  color: var(--text-secondary);
+}
+
+.breadcrumb-separator {
+  color: var(--text-disabled);
+  font-size: 12px;
+}
+
+/* ==============================
+   内容区
+   ============================== */
+.content {
+  position: fixed;
+  top: var(--header-h);
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: var(--content-py) var(--content-px);
+  overflow-y: auto;
+}
+
+/* ==============================
+   筛选区 — 引用表格规范 §6
+   ============================== */
+.filter-section {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+  padding: var(--space-2) var(--space-4);
+  margin: calc(var(--space-2) * -1) 0 var(--space-4);
+}
+
+.filter-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 24px;
+  margin-bottom: var(--space-2);
+}
+
+.filter-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.filter-row {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--space-4);
+}
+
+.filter-section.is-collapsed .filter-header {
+  margin-bottom: 0;
+}
+
+.filter-section.is-collapsed .filter-row {
+  display: none;
+}
+
+.filter-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+  flex: 1;
+  min-width: 0;
+}
+
+.filter-section.is-collapsed .filter-grid {
+  display: none;
+}
+
+.filter-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.filter-label {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-1);
+  white-space: nowrap;
+}
+
+/* 自定义下拉/输入框通用样式 — 引用表单规范 §2 */
+.filter-control {
+  position: relative;
+  width: 100%;
+}
+
+.filter-input {
+  width: 100%;
+  height: 38px;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-4);
+  font-size: 14px;
+  font-weight: 400;
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+  outline: none;
+  transition: all 150ms ease;
+  cursor: pointer;
+}
+
+.filter-input::placeholder {
+  color: var(--text-muted);
+}
+
+.filter-input:hover {
+  border-color: var(--border-hover);
+}
+
+.filter-input:focus,
+.filter-input.active {
+  border-color: var(--border-active);
+  box-shadow: 0 0 0 3px rgba(23,118,229,0.10);
+  background: rgba(23,118,229,0.06);
+}
+
+/* 搜索输入框 */
+.filter-search {
+  position: relative;
+  width: 100%;
+}
+
+.filter-search input {
+  width: 100%;
+  height: 38px;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-4);
+  font-size: 14px;
+  font-weight: 400;
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+  outline: none;
+  transition: all 150ms ease;
+}
+
+.filter-search input::placeholder {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.filter-search input:hover {
+  border-color: var(--border-hover);
+}
+
+.filter-search input:focus {
+  border-color: var(--border-active);
+  box-shadow: 0 0 0 3px rgba(23,118,229,0.10);
+}
+
+/* 下拉箭头 */
+.filter-input .dropdown-arrow {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 10px;
+  color: var(--text-muted);
+  pointer-events: none;
+  transition: transform 200ms ease;
+}
+
+.filter-input.open .dropdown-arrow {
+  transform: translateY(-50%) rotate(180deg);
+}
+
+.filter-input-text {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+}
+
+.filter-input-value {
+  font-size: 13px;
+  color: var(--text-primary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.filter-input-value.placeholder {
+  color: var(--text-muted);
+}
+
+.filter-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  flex-shrink: 0;
+}
+
+.filter-actions .filter-query,
+.filter-actions .filter-reset {
+  width: 64px;
+  padding: 0 var(--space-2);
+}
+
+.filter-actions .filter-query {
+  height: 38px;
+  gap: var(--space-1);
+}
+
+.filter-actions .filter-reset {
+  gap: var(--space-1);
+}
+
+.filter-toggle {
+  margin-left: auto;
+  font-size: 12px;
+  gap: var(--space-1);
+}
+
+.filter-toggle i {
+  font-size: 9px;
+  transition: transform 200ms ease;
+}
+
+.filter-toggle span {
+  font-size: 12px;
+}
+
+.filter-section.is-collapsed .filter-toggle i {
+  transform: rotate(180deg);
+}
+
+/* ==============================
+   按钮 — 引用按钮规范
+   ============================== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-size: 14px;
+  font-weight: 500;
+  font-family: var(--font-sans);
+  border-radius: var(--radius-sm);
+  border: none;
+  cursor: pointer;
+  transition: all 150ms ease;
+  white-space: nowrap;
+  outline: none;
+}
+
+/* Primary 主按钮 */
+.btn-primary {
+  background: var(--primary-500);
+  color: #FFFFFF;
+  padding: 0 var(--space-4);
+  height: 38px;
+  border: 1px solid transparent;
+}
+
+.btn-primary:hover {
+  background: var(--primary-400);
+}
+
+.btn-primary:active {
+  background: var(--primary-600);
+}
+
+/* Secondary 次按钮 */
+.btn-secondary {
+  background: transparent;
+  color: var(--text-primary);
+  padding: 0 var(--space-4);
+  height: 38px;
+  border: 1px solid var(--border-secondary);
+}
+
+.btn-secondary:hover {
+  background: rgba(22,104,220,0.08);
+  border-color: var(--border-secondary-hover);
+}
+
+.btn-secondary:active {
+  background: rgba(22,104,220,0.15);
+  border-color: var(--border-secondary-active);
+}
+
+/* Ghost 幽灵按钮 */
+.btn-ghost {
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 0 var(--space-4);
+  height: 38px;
+  border: 1px solid transparent;
+}
+
+.btn-ghost:hover {
+  background: rgba(255,255,255,0.06);
+  color: var(--text-primary);
+}
+
+/* Danger Outline 危险边框按钮 */
+.btn-danger-outline {
+  background: transparent;
+  color: var(--red-500);
+  padding: 0 var(--space-4);
+  height: 38px;
+  border: 1px solid var(--red-500);
+}
+
+.btn-danger-outline:hover {
+  background: rgba(255,87,87,0.08);
+}
+
+.btn-danger-outline:active {
+  background: rgba(255,87,87,0.15);
+}
+
+/* Danger 危险按钮 — 引用按钮规范 §1.4 */
+.btn-danger {
+  background: var(--red-700);
+  color: #FFFFFF;
+  padding: 0 var(--space-4);
+  height: 38px;
+  border: 1px solid var(--red-700);
+}
+
+.btn-danger:hover {
+  background: #D04040;
+  border-color: #D04040;
+}
+
+.btn-danger:active {
+  background: #A83030;
+  border-color: #A83030;
+}
+
+/* Small 尺寸 */
+.btn-sm {
+  height: 30px;
+  padding: 0 var(--space-3);
+  font-size: 14px;
+}
+
+/* ==============================
+   操作按钮栏 — 引用表格规范 §2
+   ============================== */
+.action-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-bottom: var(--space-2);
+}
+
+.action-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border-divider);
+  margin: 0 var(--space-2);
+}
+
+/* ==============================
+   表格容器 — 引用表格规范
+   ============================== */
+.table-container {
+  background: var(--card-bg);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border-subtle);
+}
+
+.table-scroll {
+  overflow-x: auto;
+  border-radius: var(--radius-lg);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: auto;
+}
+
+thead th {
+  background: var(--fixed-bg-header);
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-divider);
+  white-space: nowrap;
+  position: sticky;
+  top: 0;
+  z-index: var(--z-table-header);
+}
+
+th.sortable {
+  cursor: pointer;
+  user-select: none;
+}
+th.sortable:hover {
+  color: var(--primary-400);
+}
+th.sortable .sort-icon {
+  margin-left: 4px;
+  font-size: 12px;
+  color: var(--text-disabled);
+  transition: color 150ms ease;
+}
+th.sortable.asc .sort-icon,
+th.sortable.desc .sort-icon {
+  color: var(--primary-400);
+}
+
+tbody td {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  white-space: nowrap;
+}
+
+tbody tr {
+  transition: background 150ms ease;
+}
+
+tbody tr:hover {
+  background: rgba(23,118,229,0.06);
+}
+
+tbody tr.selected {
+  background: rgba(23,118,229,0.10);
+}
+
+tbody tr.selected:hover {
+  background: rgba(23,118,229,0.10);
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+/* 数字列 — 右对齐 + 等宽字体 */
+td.num {
+  text-align: right;
+  font-family: var(--font-mono);
+}
+
+/* 日期列 */
+td.date {}
+
+/* 文本列超长省略 */
+.td-text-ellipsis {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ========== 固定列（表格规范 §12） ========== */
+
+/* 固定列列宽 — 必须显式设定以保证 sticky offset 计算准确 */
+th.col-fixed-checkbox, td.col-fixed-checkbox { width: 48px; min-width: 48px; }
+th.col-fixed-name,     td.col-fixed-name     { width: 180px; min-width: 180px; }
+th.col-fixed-ops,      td.col-fixed-ops      { width: 100px; min-width: 100px; }
+
+/* 左固定列基础 */
+th.col-fixed-left, td.col-fixed-left {
+  position: sticky;
+  left: 0;
+  overflow: visible;
+}
+/* 第 2 列左固定偏移 = 第 1 列宽度 (48px) */
+th.col-fixed-left.col-fixed-name, td.col-fixed-left.col-fixed-name {
+  left: 48px;
+}
+
+/* 右固定列基础 */
+th.col-fixed-right, td.col-fixed-right {
+  position: sticky;
+  right: 0;
+  overflow: visible;
+}
+
+/* Z-Index 层级：角落 th (3) > 普通 th (2) > 固定 td (1) > 普通 td (0) */
+thead th.col-fixed-left,
+thead th.col-fixed-right {
+  z-index: var(--z-fixed-corner);
+}
+tbody td.col-fixed-left,
+tbody td.col-fixed-right {
+  z-index: var(--z-fixed-cell);
+}
+
+/* 不透明背景 — td（表格规范 §12.2 + §12.6） */
+tbody td.col-fixed-left,
+tbody td.col-fixed-right {
+  background: var(--fixed-bg-default);
+}
+tbody tr:hover td.col-fixed-left,
+tbody tr:hover td.col-fixed-right {
+  background: var(--fixed-bg-hover);
+}
+tbody tr.selected td.col-fixed-left,
+tbody tr.selected td.col-fixed-right {
+  background: var(--fixed-bg-selected);
+}
+tbody tr.selected:hover td.col-fixed-left,
+tbody tr.selected:hover td.col-fixed-right {
+  background: var(--fixed-bg-selected);
+}
+
+/* 不透明背景 — th */
+thead th.col-fixed-left,
+thead th.col-fixed-right {
+  background: var(--fixed-bg-header);
+}
+
+/* 阴影边界 — 最后一列左固定列的右侧（表格规范 §12.4）
+   使用 ::after 伪元素，避免 box-shadow 被相邻单元格背景覆盖 */
+th.col-last-left-fixed::after,
+td.col-last-left-fixed::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -8px;
+  bottom: 0;
+  width: 8px;
+  background: linear-gradient(to right, var(--fixed-shadow-color), transparent);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 1;
+  transition: opacity 200ms ease;
+}
+
+/* 第一列右固定列的左侧 */
+th.col-first-right-fixed::after,
+td.col-first-right-fixed::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -8px;
+  bottom: 0;
+  width: 8px;
+  background: linear-gradient(to left, var(--fixed-shadow-color), transparent);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 1;
+  transition: opacity 200ms ease;
+}
+
+/* 滚动到边缘时隐藏阴影（表格规范 §12.5） */
+.table-scroll.no-left-shadow th.col-last-left-fixed::after,
+.table-scroll.no-left-shadow td.col-last-left-fixed::after {
+  display: none;
+}
+.table-scroll.no-right-shadow th.col-first-right-fixed::after,
+.table-scroll.no-right-shadow td.col-first-right-fixed::after {
+  display: none;
+}
+
+/* Checkbox — 引用表单规范 §4.1 */
+.checkbox {
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--border-hover);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 150ms ease;
+  flex-shrink: 0;
+}
+
+.checkbox:hover {
+  border-color: var(--primary-400);
+}
+
+.checkbox.checked {
+  background: var(--primary-500);
+  border-color: var(--primary-500);
+}
+
+.checkbox.checked::after {
+  content: '';
+  width: 5px;
+  height: 9px;
+  border: solid #FFFFFF;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  margin-bottom: 1px;
+}
+
+.checkbox.indeterminate {
+  background: var(--primary-500);
+  border-color: var(--primary-500);
+}
+
+.checkbox.indeterminate::after {
+  content: '';
+  width: 8px;
+  height: 2px;
+  background: #FFFFFF;
+  border-radius: 1px;
+}
+
+/* 标签列 — 资源类型 */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+
+.tag-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+}
+
+.tag-charging { background: rgba(0,212,255,0.12); color: var(--cyan-500); }
+.tag-charging .tag-dot { background: var(--cyan-500); }
+
+.tag-storage { background: rgba(124,92,255,0.12); color: var(--violet-500); }
+.tag-storage .tag-dot { background: var(--violet-500); }
+
+.tag-solar { background: rgba(255,181,71,0.12); color: var(--orange-500); }
+.tag-solar .tag-dot { background: var(--orange-500); }
+
+.tag-load { background: rgba(0,214,143,0.12); color: var(--green-500); }
+.tag-load .tag-dot { background: var(--green-500); }
+
+/* 操作列 — 引用按钮规范 §1.7 Link */
+.action-links {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 0;
+}
+
+.action-link {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--primary-400);
+  cursor: pointer;
+  transition: color 150ms ease;
+  background: transparent;
+  border: none;
+  padding: 0;
+  white-space: nowrap;
+}
+
+.action-link:hover {
+  color: var(--primary-300);
+}
+
+.action-link:active {
+  color: var(--primary-500);
+}
+
+.action-separator {
+  width: 1px;
+  height: 12px;
+  background: var(--border-divider);
+  margin: 0 var(--space-3);
+}
+
+/* ==============================
+   分页器 — 引用表格规范 §9
+   ============================== */
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-divider);
+}
+
+.pagination-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.pagination-right {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.pagination-total {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.page-size-select {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.page-size-trigger {
+  height: 32px;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  padding: 0 28px 0 12px;
+  font-size: 13px;
+  color: var(--text-primary);
+  cursor: pointer;
+  position: relative;
+  transition: all 150ms ease;
+  display: flex;
+  align-items: center;
+  min-width: 80px;
+}
+
+.page-size-trigger:hover {
+  border-color: var(--border-hover);
+}
+
+.page-size-trigger i {
+  position: absolute;
+  right: 10px;
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+.page-numbers {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.page-btn {
+  min-width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 150ms ease;
+  background: transparent;
+  border: none;
+  padding: 0 6px;
+}
+
+.page-btn:hover {
+  color: var(--text-primary);
+  background: rgba(23,118,229,0.08);
+}
+
+.page-btn.active {
+  color: #FFFFFF;
+  background: var(--primary-500);
+}
+
+.page-btn.disabled {
+  color: var(--text-disabled);
+  cursor: not-allowed;
+}
+
+.page-btn.disabled:hover {
+  background: transparent;
+  color: var(--text-disabled);
+}
+
+.page-ellipsis {
+  color: var(--text-muted);
+  font-size: 13px;
+  padding: 0 var(--space-1);
+}
+
+.page-jump {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.page-jump input {
+  width: 48px;
+  height: 32px;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  outline: none;
+  transition: all 150ms ease;
+}
+
+.page-jump input:hover {
+  border-color: var(--border-hover);
+}
+
+.page-jump input:focus {
+  border-color: var(--border-active);
+  box-shadow: 0 0 0 3px rgba(23,118,229,0.10);
+}
+
+/* ==============================
+   下拉面板 — 引用表单规范 §3
+   ============================== */
+.dropdown-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 100%;
+  background: var(--card-bg-alt);
+  border: 1px solid rgba(22,104,220,0.20);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.40);
+  padding: var(--space-1);
+  z-index: var(--z-dropdown);
+  display: none;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.dropdown-panel.show {
+  display: block;
+}
+
+/* 头像下拉面板 — 右对齐，定位在 wrapper 之后覆盖 base 的 min-width: 100% */
+.dropdown-panel--avatar {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: auto;
+  right: 0;
+  min-width: 120px;
+  width: auto;
+  max-height: none;
+  overflow-y: visible;
+  padding: var(--space-1);
+  background: var(--card-bg-alt);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.40);
+  z-index: 300;
+}
+
+.dropdown-panel--avatar .dropdown-option {
+  padding: 10px 14px;
+  font-size: 14px;
+  justify-content: center;
+}
+
+.dropdown-option {
+  padding: 8px 12px;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 150ms ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  white-space: nowrap;
+}
+
+.dropdown-option:hover {
+  background: rgba(23,118,229,0.08);
+  color: var(--text-primary);
+}
+
+.dropdown-option.selected {
+  background: rgba(23,118,229,0.12);
+  color: var(--primary-400);
+  font-weight: 500;
+}
+
+.dropdown-option.selected i {
+  font-size: 11px;
+  color: var(--primary-400);
+}
+
+/* 级联选择面板 */
+/* ==============================
+   级联面板 — 遵循 VPP 颜色 / 表单 / 圆角规范
+   参考: color-spec §5 提升表面, form-spec §3 下拉框面板, form-spec §4.1 复选框
+   ============================== */
+.cascader-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  background: var(--card-bg-alt);                /* #0F2640 — 提升表面 */
+  border: 1px solid rgba(22,104,220,0.20);        /* form-spec §3.1 强调边框 */
+  border-radius: var(--radius-md);                /* 8px */
+  box-shadow: 0 8px 24px rgba(0,0,0,0.40);        /* form-spec §3.1 */
+  z-index: var(--z-dropdown);
+  display: none;
+}
+
+.cascader-panel.show {
+  display: flex;
+  flex-direction: column;   /* 列行在上，footer 在下 */
+  flex-wrap: nowrap;
+}
+
+/* 列行容器：所有级联列始终在同一行向右展开 */
+.cascader-body {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+/* ---- 列 ---- */
+.cascader-column {
+  box-sizing: border-box;
+  width: 180px;
+  max-height: 204px;
+  overflow-y: auto;
+  border-right: 1px solid var(--border-subtle);
+  flex-shrink: 0;
+}
+
+.cascader-column:last-child {
+  border-right: none;
+}
+
+/* 滚动条 */
+.cascader-column::-webkit-scrollbar {
+  width: 6px;
+}
+.cascader-column::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.10);
+  border-radius: 3px;
+}
+.cascader-column::-webkit-scrollbar-thumb:hover {
+  background: rgba(255,255,255,0.15);
+}
+.cascader-column::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* ---- 选项行 ---- */
+.cascader-option {
+  min-height: 34px;
+  padding: 6px 12px;
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text-secondary);                   /* #A3B8D0 — form-spec §3.2 默认 */
+  cursor: pointer;
+  transition: all 150ms ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  position: relative;
+  border-radius: var(--radius-sm);                /* 6px — form-spec §3.2 */
+  margin: 1px 4px;
+}
+
+.cascader-option:hover {
+  background: rgba(23,118,229,0.08);              /* form-spec §3.2 Hover */
+  color: var(--text-primary);                     /* #E8F0FC */
+}
+
+.cascader-option.is-active {
+  color: var(--text-primary);                     /* #E8F0FC */
+  background: rgba(23,118,229,0.08);
+}
+
+.cascader-option.is-checked {
+  color: var(--primary-400);                      /* #4897F3 — form-spec §3.2 选中 */
+  font-weight: 500;
+}
+
+.cascader-option.is-checked.is-active {
+  color: var(--primary-300);                      /* #7FB3EF */
+}
+
+.cascader-option .el-cascader-node__label {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cascader-option .el-cascader-node__arrow {
+  font-size: 12px;
+  color: var(--text-muted);                       /* #6B8AAB */
+  transition: transform 0.15s ease;
+  flex-shrink: 0;
+}
+
+.cascader-option:hover .el-cascader-node__arrow {
+  color: var(--text-secondary);                   /* #A3B8D0 */
+}
+
+/* ---- 全选行 ---- */
+.cascader-option--all {
+  border-bottom: 1px solid var(--border-subtle);   /* rgba(255,255,255,0.06) */
+  font-weight: 500;
+  color: var(--text-secondary);                    /* #A3B8D0 */
+  border-radius: 0;
+  margin: 0 4px 1px 4px;
+}
+
+.cascader-option--all:hover {
+  background: rgba(23,118,229,0.08);
+}
+
+/* ---- 复选框 — 遵循 form-spec §4.1 ---- */
+.cascader-checkbox {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  border: 1.5px solid var(--border-hover);        /* 随深浅主题切换的默认边框 */
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  box-sizing: border-box;
+  position: relative;
+}
+
+.cascader-option:hover .cascader-checkbox:not(.checked):not(.partial) {
+  border-color: var(--primary-400);               /* #4897F3 — form-spec §4.1 Hover */
+}
+
+.cascader-checkbox.checked {
+  background: var(--primary-500);                 /* #1776E5 — form-spec §4.1 选中 */
+  border-color: var(--primary-500);
+}
+
+.cascader-checkbox.checked::after {
+  content: '';
+  position: absolute;
+  width: 5px;
+  height: 9px;
+  border: solid #FFFFFF;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  margin-bottom: 1px;
+  box-sizing: border-box;
+}
+
+.cascader-checkbox.partial {
+  background: var(--primary-500);                 /* #1776E5 */
+  border-color: var(--primary-500);
+}
+
+.cascader-checkbox.partial::after {
+  content: '';
+  position: absolute;
+  width: 8px;
+  height: 2px;
+  background: #FFFFFF;
+  border-radius: 1px;
+}
+
+/* ---- 底部操作栏 ---- */
+.cascader-footer-bar {
+  align-self: stretch;          /* flex column 交叉轴自动撑满，替代 width:100% 避免百分比计算异常 */
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  border-top: 1px solid var(--border-subtle);      /* rgba(255,255,255,0.06) */
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.cascader-footer-bar-count {
+  font-size: 12px;
+  color: var(--text-muted);                        /* #6B8AAB */
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.cascader-footer-bar-btn {
+  font-size: 12px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: var(--radius-sm);                 /* 6px */
+  border: 1px solid var(--border-secondary);       /* rgba(22,104,220,0.45) — 次按钮 */
+  background: transparent;
+  color: var(--text-secondary);                    /* #A3B8D0 */
+  cursor: pointer;
+  transition: all 150ms ease;
+  white-space: nowrap;
+  line-height: 26px;
+  font-family: var(--font-sans);
+}
+
+.cascader-footer-bar-btn:hover {
+  color: var(--primary-400);                       /* #4897F3 */
+  border-color: var(--border-secondary-hover);     /* rgba(22,104,220,0.55) */
+}
+
+.cascader-footer-bar-btn--confirm {
+  background: var(--primary-500);                  /* #1776E5 */
+  color: #FFFFFF;
+  border-color: var(--primary-500);
+}
+
+.cascader-footer-bar-btn--confirm:hover {
+  background: var(--primary-400);                  /* #4897F3 */
+  border-color: var(--primary-400);
+  color: #FFFFFF;
+}
+
+/* 多选 trigger */
+.filter-input--multi {
+  cursor: pointer;
+  min-height: 38px;
+  height: auto;
+  padding: 4px 6px 4px 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.filter-input-tags {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.filter-input-placeholder {
+  font-size: 14px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.filter-input-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  font-size: 12px;
+  color: #D0E4FF;
+  background: rgba(23,118,229,0.18);
+  border: 1px solid rgba(23,118,229,0.25);
+  border-radius: var(--radius-full);
+  white-space: nowrap;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.filter-input-tag-close {
+  cursor: pointer;
+  font-size: 10px;
+  color: rgba(127,179,239,0.7);
+  transition: color 150ms ease;
+  line-height: 1;
+}
+
+.filter-input-tag-close:hover {
+  color: #fff;
+}
+
+.filter-input-tag-more {
+  font-size: 12px;
+  color: var(--primary-400);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.filter-input-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.filter-input-count {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--primary-400);
+  white-space: nowrap;
+}
+
+
+/* 批量选中内联提示 */
+.batch-count {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--primary-300);
+  white-space: nowrap;
+}
+
+.batch-clear {
+  font-size: 13px;
+  color: var(--primary-400);
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  padding: 0;
+  transition: color 150ms ease;
+  white-space: nowrap;
+}
+
+.batch-clear:hover {
+  color: var(--primary-200);
+}
+
+/* Toast 通知 */
+.toast {
+  position: fixed;
+  top: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-8px);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 12px 16px;
+  background: var(--card-bg);
+  border: 1px solid var(--border-divider);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.40);
+  z-index: var(--z-toast);
+  font-size: 14px;
+  color: var(--text-primary);
+  opacity: 0;
+  transition: all 250ms cubic-bezier(0.16,1,0.3,1);
+  pointer-events: none;
+}
+
+.toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+.toast.success i { color: var(--green-500); }
+.toast.error i { color: var(--red-500); }
+.toast.info i { color: var(--primary-400); }
+
+/* 遮罩层 — 引用弹窗规范 */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.60);
+  z-index: var(--z-modal-mask);
+  opacity: 0;
+  transition: opacity 200ms ease;
+  pointer-events: none;
+}
+
+.overlay.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* 弹窗 — 引用弹窗规范 */
+.modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, calc(-50% + 8px)) scale(0.95);
+  width: 640px;
+  max-height: 90%;
+  background: var(--card-bg);
+  border: 1px solid rgba(22,104,220,0.15);
+  border-radius: var(--radius-xl);
+  box-shadow: 0 24px 64px rgba(0,0,0,0.50);
+  z-index: var(--z-modal);
+  display: flex;
+  flex-direction: column;
+  opacity: 0;
+  transition: all 250ms cubic-bezier(0.16,1,0.3,1);
+  pointer-events: none;
+}
+
+.modal.show {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1);
+  pointer-events: auto;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border-divider);
+  flex-shrink: 0;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 26px;
+}
+
+.modal-close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 150ms ease;
+  background: transparent;
+  border: none;
+  font-size: 14px;
+}
+
+.modal-close:hover {
+  background: rgba(255,255,255,0.06);
+  color: var(--text-secondary);
+}
+
+.modal-body {
+  padding: 24px;
+  max-height: 480px;
+  overflow-y: auto;
+  flex-shrink: 0;
+}
+
+.modal-body-text {
+  font-size: 14px;
+  font-weight: 400;
+  color: var(--text-secondary);
+  line-height: 22px;
+}
+
+.modal-body-text strong {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.modal-body-warning {
+  margin-top: 12px;
+  font-size: 14px;
+  color: var(--red-500);
+}
+
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding: 16px 24px;
+  border-top: 1px solid var(--border-divider);
+  flex-shrink: 0;
+}
+
+/* 表单弹窗内容 */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.form-row.full {
+  grid-template-columns: 1fr;
+}
+
+.form-field {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-field-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-secondary);
+  margin-bottom: var(--space-2);
+}
+
+.form-field-label .required {
+  color: var(--red-500);
+  margin-left: 2px;
+}
+
+.form-field input,
+.form-field textarea {
+  width: 100%;
+  height: 38px;
+  background: transparent;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  padding: 0 var(--space-4);
+  font-size: 14px;
+  font-weight: 400;
+  font-family: var(--font-sans);
+  color: var(--text-primary);
+  outline: none;
+  transition: all 150ms ease;
+}
+
+.form-field input::placeholder,
+.form-field textarea::placeholder {
+  color: var(--text-muted);
+}
+
+.form-field input:hover,
+.form-field textarea:hover {
+  border-color: var(--border-hover);
+}
+
+.form-field input:focus,
+.form-field textarea:focus {
+  border-color: var(--border-active);
+  box-shadow: 0 0 0 3px rgba(23,118,229,0.10);
+}
+
+.form-field textarea {
+  height: auto;
+  min-height: 80px;
+  padding: 10px 16px;
+  resize: vertical;
+  line-height: 22px;
+}
+
+.form-footer-hint {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-right: auto;
+}
+
+/* 减少动效 */
+@media (prefers-reduced-motion: reduce) {
+  .modal, .overlay, .toast {
+    animation: none !important;
+    transition: opacity 150ms ease !important;
+  }
+  .modal.show {
+    transform: translate(-50%, -50%) !important;
+  }
+  .toast {
+    transform: translateX(-50%) !important;
+  }
+  .toast.show {
+    transform: translateX(-50%) !important;
+    opacity: 1;
+  }
+}
+</style>
+<link rel="stylesheet" href="shared-navigation.css">
+<link rel="stylesheet" href="shared-list-components.css">
+<link rel="stylesheet" href="shared-primary-menu-active.css">
+</head>
+<body>
+
+<!-- ============================== 顶栏 ============================== -->
+<header class="header">
+  <div class="header-left">
+    <div class="header-logo">
+      <div class="header-logo-icon">
+        <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- 外环 — 电网边界 -->
+          <circle cx="16" cy="16" r="14.5" fill="none" stroke="rgba(72,151,243,0.28)" stroke-width="1.2"/>
+          <!-- 分布式节点三角骨架 -->
+          <line x1="16" y1="4" x2="5" y2="24" stroke="rgba(72,151,243,0.28)" stroke-width="1"/>
+          <line x1="5" y1="24" x2="27" y2="24" stroke="rgba(72,151,243,0.28)" stroke-width="1"/>
+          <line x1="27" y1="24" x2="16" y2="4" stroke="rgba(72,151,243,0.28)" stroke-width="1"/>
+          <!-- 三个分布式节点 — 恢复大小并提亮 -->
+          <circle cx="16" cy="4" r="2.6" fill="rgba(127,179,239,0.92)"/>
+          <circle cx="5" cy="24" r="2.4" fill="rgba(127,179,239,0.88)"/>
+          <circle cx="27" cy="24" r="2.4" fill="rgba(127,179,239,0.88)"/>
+          <!-- 节点到中心的汇聚线 — 加粗 -->
+          <line x1="16" y1="6.6" x2="16" y2="10" stroke="rgba(127,179,239,0.82)" stroke-width="1.8" stroke-linecap="round"/>
+          <line x1="7.4" y1="21.6" x2="11" y2="18" stroke="rgba(127,179,239,0.82)" stroke-width="1.8" stroke-linecap="round"/>
+          <line x1="24.6" y1="21.6" x2="21" y2="18" stroke="rgba(127,179,239,0.82)" stroke-width="1.8" stroke-linecap="round"/>
+          <!-- 中心光晕环 -->
+          <circle cx="16" cy="16" r="7" fill="none" stroke="rgba(127,179,239,0.26)" stroke-width="1.8"/>
+          <!-- 中心调度核心 -->
+          <circle cx="16" cy="16" r="5" fill="url(#coreGrad)" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.5"/>
+          <defs>
+            <radialGradient id="coreGrad" cx="40%" cy="35%">
+              <stop offset="0%" stop-color="#FFFFFF"/>
+              <stop offset="22%" stop-color="#D6E8FF"/>
+              <stop offset="100%" stop-color="#5BA0F5"/>
+            </radialGradient>
+          </defs>
+        </svg>
+      </div>
+      <span class="header-logo-title">虚拟电厂智慧运营平台</span>
+    </div>
+    <nav class="header-nav">
+      <div class="header-nav-item" role="link" tabindex="0" onclick="window.location.href='index.html'" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='index.html'}">首页</div>
+      <div class="header-nav-item">基础管理</div>
+      <div class="header-nav-item active header-nav-dropdown" tabindex="0" aria-expanded="false">资源池管理
+        <div class="header-submenu">
+          <div class="header-submenu-item active" role="link" tabindex="0" onclick="event.stopPropagation();window.location.href='resource-list.html'">资源管理</div>
+          <div class="header-submenu-item">聚合管理</div>
+          <div class="header-submenu-item">资源分析</div>
+        </div>
+      </div>
+      <div class="header-nav-item">运行监测</div>
+      <div class="header-nav-item header-nav-dropdown" tabindex="0" aria-expanded="false">协调控制
+        <div class="header-submenu">
+          <div class="header-submenu-item">负荷预测</div>
+          <div class="header-submenu-item">方案管理</div>
+          <div class="header-submenu-item" role="link" tabindex="0" onclick="event.stopPropagation();window.location.href='optimization-decomposition.html'" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();window.location.href='optimization-decomposition.html'}">优化分解</div>
+          <div class="header-submenu-item">分解下发审核</div>
+          <div class="header-submenu-item">响应方案管理监视</div>
+        </div>
+      </div>
+      <div class="header-nav-item">物联采集</div>
+      <div class="header-nav-item header-nav-dropdown" tabindex="0" aria-expanded="false">系统管理
+        <div class="header-submenu">
+          <div class="header-submenu-item" role="link" tabindex="0" onclick="event.stopPropagation();window.location.href='user-management.html'">用户管理</div>
+          <div class="header-submenu-item">角色管理</div>
+          <div class="header-submenu-item">权限管理</div>
+        </div>
+      </div>
+      <div class="header-nav-item">需求响应</div><div class="header-nav-item" role="link" tabindex="0" onclick="location.href='filter-layout-examples.html'">更多</div>
+    </nav>
+  </div>
+  <div class="header-right">
+    <button class="nav-layout-toggle" id="navLayoutToggle" type="button" onclick="toggleNavLayout()" aria-label="切换为左侧菜单" aria-pressed="false" title="切换为左侧菜单">
+      <i class="fa-solid fa-table-columns"></i>
+    </button>
+    <button class="theme-toggle" id="themeToggle" type="button" onclick="toggleTheme()" aria-label="切换为浅色主题" aria-pressed="false" title="切换为浅色主题">
+      <i class="fa-solid fa-sun"></i>
+    </button>
+    <div class="header-avatar-wrapper" id="avatarBtn" onclick="toggleDropdown('avatar')">
+      <div class="header-avatar">GJ</div>
+      <i class="fa-solid fa-chevron-down header-avatar-arrow"></i>
+      <div class="dropdown-panel dropdown-panel--avatar" id="avatarPanel">
+        <div class="dropdown-option" onclick="handleAvatarAction('profile')"><i class="fa-solid fa-user" style="margin-right:4px;font-size:12px;opacity:0.7;"></i>个人中心</div>
+        <div class="dropdown-divider"></div>
+        <div class="dropdown-option" onclick="handleAvatarAction('logout')"><i class="fa-solid fa-right-from-bracket" style="margin-right:4px;font-size:12px;opacity:0.7;"></i>退出登录</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<!-- ============================== 内容区 ============================== -->
+<div class="content">
+
+  <!-- ============================== 面包屑 ============================== -->
+  <div class="breadcrumb">
+    <div class="breadcrumb-list">
+      <span class="breadcrumb-item"><i class="fa-solid fa-house" style="font-size:12px;"></i></span>
+      <span class="breadcrumb-separator"><i class="fa-solid fa-chevron-right"></i></span>
+      <span class="breadcrumb-item">资源池管理</span>
+      <span class="breadcrumb-separator"><i class="fa-solid fa-chevron-right"></i></span>
+      <span class="breadcrumb-item current">资源管理</span>
+    </div>
+  </div>
+
+  <!-- 筛选区 -->
+  <div class="filter-section">
+    <div class="filter-header">
+      <span class="filter-title">筛选条件</span>
+      <button class="filter-toggle" id="filterToggle" type="button" aria-expanded="true" aria-controls="filterRow" onclick="toggleFilterSection()">
+        <i class="fa-solid fa-chevron-up"></i>
+        <span>收起</span>
+      </button>
+    </div>
+    <div class="filter-row" id="filterRow">
+      <div class="filter-grid" id="filterGrid">
+      <!-- 区域：多选 -->
+      <div class="filter-item" style="min-width:0;">
+        <label class="filter-label">区域</label>
+        <div class="filter-control" style="width:100%;">
+          <div class="filter-input filter-input--multi" id="regionTrigger" onclick="event.stopPropagation(); toggleMultiCascader('region')">
+            <div class="filter-input-tags" id="regionTags"><span class="filter-input-placeholder">请选择省 / 市 / 区县</span></div>
+            <div class="filter-input-actions">
+              <span class="filter-input-count" id="regionCount" style="display:none;"></span>
+              <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
+            </div>
+          </div>
+          <div class="cascader-panel cascader-panel--region" id="regionPanel"></div>
+        </div>
+      </div>
+
+      <!-- 所属用户：下拉选择 -->
+      <div class="filter-item">
+        <label class="filter-label">所属用户</label>
+        <div class="filter-control">
+          <div class="filter-input" id="userTrigger" onclick="toggleDropdown('user')">
+            <div class="filter-input-text">
+              <span class="filter-input-value placeholder">请选择归属企业</span>
+              <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
+            </div>
+          </div>
+          <div class="dropdown-panel" id="userPanel"></div>
+        </div>
+      </div>
+
+      <!-- 资源类型：级联选择 -->
+      <div class="filter-item">
+        <label class="filter-label">资源类型</label>
+        <div class="filter-control">
+          <div class="filter-input" id="typeTrigger" onclick="toggleCascader('type')">
+            <div class="filter-input-text">
+              <span class="filter-input-value placeholder">请选择资源类别</span>
+              <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
+            </div>
+          </div>
+          <div class="cascader-panel" id="typePanel"></div>
+        </div>
+      </div>
+
+      <!-- 资源名称：文本搜索 -->
+      <div class="filter-item">
+        <label class="filter-label">资源名称</label>
+        <div class="filter-search">
+          <input type="text" placeholder="请输入资源站点名称" id="searchInput">
+        </div>
+      </div>
+      </div>
+
+      <div class="filter-actions">
+        <button class="btn btn-primary btn-md filter-query" onclick="applyFilters()">
+          <i class="fa-solid fa-magnifying-glass"></i>
+          查询
+        </button>
+        <button class="btn btn-ghost btn-md filter-reset" onclick="resetFilters()">
+          <i class="fa-solid fa-rotate-left"></i>
+          重置
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 操作按钮栏 -->
+  <div class="action-bar">
+    <span class="batch-count" id="batchCount" style="display:none; margin-right: var(--space-1);">已选择 0 项</span>
+    <button class="batch-clear" id="batchClearBtn" onclick="clearSelection()" style="display:none;">取消选择</button>
+    <span class="action-divider" id="batchDivider" style="display:none;"></span>
+    <button class="btn btn-primary btn-sm" onclick="openAddModal()">
+      <i class="fa-solid fa-plus"></i>
+      新增资源
+    </button>
+    <button class="btn btn-danger-outline btn-sm" onclick="batchDelete()">
+      <i class="fa-solid fa-trash-can"></i>
+      批量删除
+    </button>
+    <span class="action-divider" aria-hidden="true"></span>
+    <button class="btn btn-secondary btn-sm" onclick="exportAll()">
+      <i class="fa-solid fa-download"></i>
+      导出
+    </button>
+  </div>
+
+  <!-- 表格 -->
+  <div class="table-container">
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th class="col-fixed-left col-fixed-checkbox"><div class="checkbox" id="headerCheckbox" onclick="toggleSelectAll()"></div></th>
+            <th class="col-fixed-left col-fixed-name col-last-left-fixed sortable" data-sort="name" onclick="toggleSort('name', this)">资源名称<i class="fa-solid fa-sort sort-icon"></i></th>
+            <th>所属运营商</th>
+            <th>所属用户</th>
+            <th>户号</th>
+            <th>区域</th>
+            <th>资源类型</th>
+            <th style="text-align:right;">资源容量(kW)</th>
+            <th style="text-align:right;">可调容量(kW)</th>
+            <th>电压等级</th>
+            <th class="sortable" data-sort="updateTime" onclick="toggleSort('updateTime', this)">更新时间<i class="fa-solid fa-sort sort-icon"></i></th>
+            <th class="col-fixed-right col-fixed-ops col-first-right-fixed">操作</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+    <!-- 分页器 -->
+    <div class="pagination">
+      <div class="pagination-left">
+        <span class="pagination-total" id="totalRecords">共 0 条记录</span>
+        <div class="page-size-select">
+          <span>每页</span>
+          <div class="page-size-trigger" id="pageSizeTrigger" onclick="toggleDropdown('pageSize')">
+            <span id="pageSizeValue">10条</span>
+            <i class="fa-solid fa-chevron-down"></i>
+          </div>
+          <div class="dropdown-panel" id="pageSizePanel" style="min-width:80px;">
+            <div class="dropdown-option" onclick="changePageSize(10)">10条</div>
+            <div class="dropdown-option" onclick="changePageSize(20)">20条</div>
+            <div class="dropdown-option" onclick="changePageSize(50)">50条</div>
+          </div>
+        </div>
+      </div>
+      <div class="pagination-right">
+        <div class="page-numbers" id="pageNumbers"></div>
+        <div class="page-jump">
+          <span>跳至</span>
+          <input type="text" value="1" id="jumpInput" onkeydown="handleJump(event)">
+          <span>页</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ============================== 弹窗：新增/编辑资源 ============================== -->
+<div class="overlay" id="overlay" onclick="closeModal()"></div>
+<div class="modal" id="formModal">
+  <div class="modal-header">
+    <span class="modal-title" id="modalTitle">新增资源</span>
+    <button class="modal-close" onclick="closeModal()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="modal-body">
+    <div class="form-row">
+      <div class="form-field">
+        <label class="form-field-label">资源名称<span class="required">*</span></label>
+        <input type="text" placeholder="请输入资源站点名称" id="formName">
+      </div>
+      <div class="form-field">
+        <label class="form-field-label">户号<span class="required">*</span></label>
+        <input type="text" placeholder="请输入用户编号" id="formAccount">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field">
+        <label class="form-field-label">所属运营商</label>
+        <input type="text" placeholder="请输入运营主体" id="formOperator">
+      </div>
+      <div class="form-field">
+        <label class="form-field-label">所属用户</label>
+        <input type="text" placeholder="请输入归属单位" id="formUser">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field">
+        <label class="form-field-label">资源类型<span class="required">*</span></label>
+        <div class="filter-control">
+          <div class="filter-input" id="formTypeTrigger" onclick="toggleFormTypeDropdown()">
+            <div class="filter-input-text">
+              <span class="filter-input-value placeholder" id="formTypeValue">请选择资源类型</span>
+              <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
+            </div>
+          </div>
+          <div class="dropdown-panel" id="formTypePanel"></div>
+        </div>
+      </div>
+      <div class="form-field">
+        <label class="form-field-label">电压等级</label>
+        <input type="text" placeholder="如：10kV、35kV" id="formVoltage">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field">
+        <label class="form-field-label">资源容量 (kW)</label>
+        <input type="text" placeholder="请输入额定容量" id="formCapacity">
+      </div>
+      <div class="form-field">
+        <label class="form-field-label">可调容量 (kW)</label>
+        <input type="text" placeholder="请输入可调节容量" id="formAdjustable">
+      </div>
+    </div>
+    <div class="form-row full">
+      <div class="form-field">
+        <label class="form-field-label">区域</label>
+        <div class="filter-control">
+          <div class="filter-input" id="formRegionTrigger" onclick="toggleFormRegionCascader()">
+            <div class="filter-input-text">
+              <span class="filter-input-value placeholder" id="formRegionValue">请选择省 / 市 / 区县</span>
+              <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
+            </div>
+          </div>
+          <div class="cascader-panel" id="formRegionPanel"></div>
+        </div>
+      </div>
+    </div>
+    <div class="form-row full">
+      <div class="form-field">
+        <label class="form-field-label">备注</label>
+        <textarea placeholder="请输入备注信息（可选）" id="formRemark"></textarea>
+      </div>
+    </div>
+  </div>
+  <div class="modal-footer">
+    <span class="form-footer-hint">带 <span style="color:var(--red-500);">*</span> 为必填项</span>
+    <button class="btn btn-ghost btn-md" onclick="closeModal()">取消</button>
+    <button class="btn btn-primary btn-md" onclick="saveResource()">保存</button>
+  </div>
+</div>
+
+<!-- ============================== 弹窗：删除确认 ============================== -->
+<div class="modal" id="deleteModal" style="width:480px;">
+  <div class="modal-header">
+    <span class="modal-title">删除资源</span>
+    <button class="modal-close" onclick="closeDeleteModal()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="modal-body">
+    <div class="modal-body-text">
+      确定要删除 <strong id="deleteName">该资源</strong> 吗？
+    </div>
+    <div class="modal-body-warning">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      此操作不可撤销，删除后数据将无法恢复。
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost btn-md" onclick="closeDeleteModal()">取消</button>
+    <button class="btn btn-danger btn-md" onclick="confirmDelete()">确认删除</button>
+  </div>
+</div>
+
+<!-- ============================== 弹窗：批量删除确认 ============================== -->
+<div class="modal" id="batchDeleteModal" style="width:480px;">
+  <div class="modal-header">
+    <span class="modal-title">批量删除</span>
+    <button class="modal-close" onclick="closeBatchDeleteModal()"><i class="fa-solid fa-xmark"></i></button>
+  </div>
+  <div class="modal-body">
+    <div class="modal-body-text">
+      确定要删除选中的 <strong id="batchDeleteCount">0</strong> 项资源吗？
+    </div>
+    <div class="modal-body-warning">
+      <i class="fa-solid fa-triangle-exclamation"></i>
+      此操作不可撤销，删除后数据将无法恢复。
+    </div>
+  </div>
+  <div class="modal-footer">
+    <button class="btn btn-ghost btn-md" onclick="closeBatchDeleteModal()">取消</button>
+    <button class="btn btn-danger btn-md" onclick="confirmBatchDelete()">确认删除</button>
+  </div>
+</div>
+
+<!-- ============================== Toast ============================== -->
+<div class="toast" id="toast">
+  <i class="fa-solid fa-circle-check"></i>
+  <span id="toastMessage">操作成功</span>
+</div>
+
+<script>
+/* ==============================
+   数据
+   ============================== */
+const resourceTypeMap = {
+  '充电桩': { cls: 'tag-charging', icon: 'fa-solid fa-bolt' },
+  '储能':   { cls: 'tag-storage', icon: 'fa-solid fa-battery-three-quarters' },
+  '光伏':   { cls: 'tag-solar', icon: 'fa-solid fa-sun' },
+  '负荷':   { cls: 'tag-load', icon: 'fa-solid fa-industry' }
+};
+
+const regionData = [
+  { label: '江苏省', children: [
+    { label: '南京市', children: ['玄武区','秦淮区','建邺区','鼓楼区','浦口区'] },
+    { label: '苏州市', children: ['姑苏区','吴中区','相城区','工业园区','高新区'] },
+    { label: '无锡市', children: ['梁溪区','锡山区','惠山区','滨湖区','新吴区'] }
+  ]},
+  { label: '浙江省', children: [
+    { label: '杭州市', children: ['上城区','拱墅区','西湖区','滨江区','余杭区'] },
+    { label: '宁波市', children: ['海曙区','江北区','北仑区','镇海区','鄞州区'] },
+    { label: '温州市', children: ['鹿城区','龙湾区','瓯海区','洞头区'] }
+  ]},
+  { label: '广东省', children: [
+    { label: '广州市', children: ['越秀区','海珠区','荔湾区','天河区','白云区'] },
+    { label: '深圳市', children: ['罗湖区','福田区','南山区','宝安区','龙岗区'] },
+    { label: '东莞市', children: ['莞城街道','东城街道','南城街道','万江街道'] }
+  ]},
+  { label: '上海市', children: [
+    { label: '市辖区', children: ['黄浦区','徐汇区','长宁区','静安区','普陀区','浦东新区'] }
+  ]}
+];
+
+const resourceTypeData = [
+  { label: '充电桩', children: ['直流快充','交流慢充','交直流一体','超级快充'] },
+  { label: '储能', children: ['电化学储能','机械储能','电磁储能','热储能'] },
+  { label: '光伏', children: ['集中式光伏','分布式光伏','屋顶光伏','漂浮式光伏'] },
+  { label: '负荷', children: ['工业负荷','商业负荷','居民负荷','农业负荷'] },
+  { label: '风电', children: ['陆上风电','海上风电','分散式风电'] },
+  { label: '水电', children: ['常规水电','抽水蓄能','小水电'] }
+];
+
+const userList = [
+  '国网江苏省电力有限公司',
+  '华能国际电力股份有限公司',
+  '大唐发电股份有限公司',
+  '国家电投集团江苏电力有限公司',
+  '华润电力控股有限公司',
+  '中广核新能源有限公司',
+  '三峡能源股份有限公司',
+  '明阳智慧能源集团股份有限公司'
+];
+
+// 表格数据
+let tableData = [
+  { id:1, name:'浦东新区充电站A', operator:'国网上海电动车服务公司', user:'国网江苏省电力有限公司', account:'SH-PD-2024-0012', region:'上海市 / 浦东新区', type:'充电桩', capacity:1200, adjustable:800, voltage:'10kV', updateTime:'2026-07-28 14:32' },
+  { id:2, name:'苏州工业园区储能电站', operator:'华能江苏能源开发有限公司', user:'华能国际电力股份有限公司', account:'JS-SZ-2024-0085', region:'江苏省 / 苏州市 / 工业园区', type:'储能', capacity:5000, adjustable:3500, voltage:'35kV', updateTime:'2026-07-27 09:15' },
+  { id:3, name:'杭州余杭屋顶光伏项目', operator:'正泰新能源开发有限公司', user:'国家电投集团江苏电力有限公司', account:'ZJ-HZ-2024-0231', region:'浙江省 / 杭州市 / 余杭区', type:'光伏', capacity:3000, adjustable:1800, voltage:'10kV', updateTime:'2026-07-26 16:48' },
+  { id:4, name:'南京江北工业负荷群', operator:'国网江苏省电力有限公司', user:'国网江苏省电力有限公司', account:'JS-NJ-2024-0156', region:'江苏省 / 南京市 / 浦口区', type:'负荷', capacity:8000, adjustable:2000, voltage:'35kV', updateTime:'2026-07-25 11:20' },
+  { id:5, name:'深圳南山充电站B', operator:'南方电网电动车服务公司', user:'华润电力控股有限公司', account:'GD-SZ-2024-0342', region:'广东省 / 深圳市 / 南山区', type:'充电桩', capacity:1800, adjustable:1200, voltage:'10kV', updateTime:'2026-07-24 08:05' },
+  { id:6, name:'宁波鄞州分布式光伏', operator:'隆基绿能科技股份有限公司', user:'中广核新能源有限公司', account:'ZJ-NB-2024-0178', region:'浙江省 / 宁波市 / 鄞州区', type:'光伏', capacity:2500, adjustable:1500, voltage:'10kV', updateTime:'2026-07-23 15:30' },
+  { id:7, name:'广州白云储能调频站', operator:'比亚迪储能有限公司', user:'三峡能源股份有限公司', account:'GD-GZ-2024-0289', region:'广东省 / 广州市 / 白云区', type:'储能', capacity:8000, adjustable:5000, voltage:'110kV', updateTime:'2026-07-22 10:12' },
+  { id:8, name:'无锡新吴区充电站群', operator:'国网无锡供电公司', user:'国网江苏省电力有限公司', account:'JS-WX-2024-0067', region:'江苏省 / 无锡市 / 新吴区', type:'充电桩', capacity:2400, adjustable:1600, voltage:'10kV', updateTime:'2026-07-21 13:45' },
+  { id:9, name:'温州鹿城工业园区负荷', operator:'国网温州供电公司', user:'明阳智慧能源集团股份有限公司', account:'ZJ-WZ-2024-0193', region:'浙江省 / 温州市 / 鹿城区', type:'负荷', capacity:6000, adjustable:1800, voltage:'35kV', updateTime:'2026-07-20 17:22' },
+  { id:10, name:'上海黄浦商业楼宇负荷', operator:'国网上海市区供电公司', user:'国网江苏省电力有限公司', account:'SH-HP-2024-0045', region:'上海市 / 黄浦区', type:'负荷', capacity:3500, adjustable:1000, voltage:'10kV', updateTime:'2026-07-19 09:50' },
+  { id:11, name:'东莞松山湖光伏电站', operator:'华为数字能源技术有限公司', user:'华润电力控股有限公司', account:'GD-DG-2024-0412', region:'广东省 / 东莞市 / 松山湖', type:'光伏', capacity:4500, adjustable:2700, voltage:'35kV', updateTime:'2026-07-18 14:08' },
+  { id:12, name:'南京秦淮充电站C', operator:'星星充电科技有限公司', user:'华能国际电力股份有限公司', account:'JS-NJ-2024-0198', region:'江苏省 / 南京市 / 秦淮区', type:'充电桩', capacity:1500, adjustable:1000, voltage:'10kV', updateTime:'2026-07-17 11:35' }
+];
+
+// 分页状态
+let currentPage = 1;
+let pageSize = 10;
+let selectedIds = new Set();
+let editingId = null;
+let deletingId = null;
+
+/* 获取当前筛选后的数据 */
+function getFilteredData() {
+  if (regionMultiSelected.size === 0) return tableData;
+  return tableData.filter(function(row) {
+    return Array.from(regionMultiSelected).some(function(selPath) {
+      return row.region.indexOf(selPath) === 0;
+    });
+  });
+}
+
+/* ==============================
+   排序
+   ============================== */
+var sortState = { key: null, dir: null };
+
+function toggleSort(key, thEl) {
+  if (sortState.key === key) {
+    if (sortState.dir === 'asc') {
+      sortState.dir = 'desc';
+    } else if (sortState.dir === 'desc') {
+      sortState.key = null;
+      sortState.dir = null;
+    }
+  } else {
+    sortState.key = key;
+    sortState.dir = 'asc';
+  }
+
+  // 更新所有表头图标
+  document.querySelectorAll('th.sortable').forEach(function(th) {
+    th.classList.remove('asc', 'desc');
+    var icon = th.querySelector('.sort-icon');
+    if (th === thEl) {
+      if (sortState.dir === 'asc') {
+        th.classList.add('asc');
+        icon.className = 'fa-solid fa-sort-up sort-icon';
+      } else if (sortState.dir === 'desc') {
+        th.classList.add('desc');
+        icon.className = 'fa-solid fa-sort-down sort-icon';
+      } else {
+        icon.className = 'fa-solid fa-sort sort-icon';
+      }
+    } else {
+      icon.className = 'fa-solid fa-sort sort-icon';
+    }
+  });
+
+  currentPage = 1;
+  renderTable();
+}
+
+/* ==============================
+   渲染表格
+   ============================== */
+function renderTable() {
+  // 按区域筛选
+  var filteredData = getFilteredData();
+
+  // 排序
+  if (sortState.key && sortState.dir) {
+    filteredData = filteredData.slice().sort(function(a, b) {
+      var va = a[sortState.key];
+      var vb = b[sortState.key];
+      if (sortState.key === 'updateTime') {
+        va = va.replace(/[-: ]/g, '');
+        vb = vb.replace(/[-: ]/g, '');
+      }
+      if (va < vb) return sortState.dir === 'asc' ? -1 : 1;
+      if (va > vb) return sortState.dir === 'asc' ? 1 : -1;
+      return 0;
+    });
+  }
+
+  const tbody = document.getElementById('tableBody');
+  const start = (currentPage - 1) * pageSize;
+  const end = start + pageSize;
+  const pageData = filteredData.slice(start, end);
+
+  if (pageData.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="12" style="text-align:center; padding:48px 16px;">
+          <div style="display:flex;flex-direction:column;align-items:center;gap:8px;">
+            <i class="fa-solid fa-inbox" style="font-size:48px;color:var(--text-disabled);"></i>
+            <div style="font-size:14px;font-weight:500;color:var(--text-secondary);">暂无数据</div>
+            <div style="font-size:12px;color:var(--text-muted);">点击上方"新增资源"按钮添加</div>
+          </div>
+        </td>
+      </tr>`;
+  } else {
+    tbody.innerHTML = pageData.map(row => {
+      const typeInfo = resourceTypeMap[row.type] || { cls: 'tag-load', icon: 'fa-solid fa-circle' };
+      const isSelected = selectedIds.has(row.id);
+      return `
+        <tr class="${isSelected ? 'selected' : ''}" data-id="${row.id}">
+          <td class="col-fixed-left col-fixed-checkbox"><div class="checkbox ${isSelected ? 'checked' : ''}" onclick="toggleRow(${row.id})"></div></td>
+          <td class="col-fixed-left col-fixed-name col-last-left-fixed td-text-ellipsis" title="${row.name}">${row.name}</td>
+          <td>${row.operator}</td>
+          <td>${row.user}</td>
+          <td>${row.account}</td>
+          <td>${row.region}</td>
+          <td>
+            <span class="tag ${typeInfo.cls}">
+              <span class="tag-dot"></span>
+              ${row.type}
+            </span>
+          </td>
+          <td class="num">${row.capacity.toLocaleString()}</td>
+          <td class="num">${row.adjustable.toLocaleString()}</td>
+          <td>${row.voltage}</td>
+          <td class="date">${row.updateTime}</td>
+          <td class="col-fixed-right col-fixed-ops col-first-right-fixed">
+            <div class="action-links">
+              <button class="action-link" onclick="openEditModal(${row.id})">编辑</button>
+            </div>
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  // 更新分页
+  renderPagination();
+  updateBatchBar();
+  updateHeaderCheckbox();
+  updateStickyShadows();
+}
+
+/* ==============================
+   分页器渲染
+   ============================== */
+function renderPagination() {
+  const total = getFilteredData().length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+
+  document.getElementById('totalRecords').textContent = `共 ${total} 条记录`;
+
+  const pageNumbers = document.getElementById('pageNumbers');
+  let html = '';
+
+  // 上一页
+  html += `<button class="page-btn ${currentPage === 1 ? 'disabled' : ''}" onclick="goToPage(${currentPage - 1})">
+    <i class="fa-solid fa-chevron-left" style="font-size:11px;"></i>
+  </button>`;
+
+  // 页码逻辑
+  if (totalPages <= 7) {
+    for (let i = 1; i <= totalPages; i++) {
+      html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+    }
+  } else {
+    // 第一页
+    html += `<button class="page-btn ${1 === currentPage ? 'active' : ''}" onclick="goToPage(1)">1</button>`;
+
+    if (currentPage > 4) {
+      html += `<span class="page-ellipsis">...</span>`;
+    }
+
+    const start = Math.max(2, currentPage - 2);
+    const end = Math.min(totalPages - 1, currentPage + 2);
+
+    for (let i = start; i <= end; i++) {
+      html += `<button class="page-btn ${i === currentPage ? 'active' : ''}" onclick="goToPage(${i})">${i}</button>`;
+    }
+
+    if (currentPage < totalPages - 3) {
+      html += `<span class="page-ellipsis">...</span>`;
+    }
+
+    // 最后一页
+    html += `<button class="page-btn ${totalPages === currentPage ? 'active' : ''}" onclick="goToPage(${totalPages})">${totalPages}</button>`;
+  }
+
+  // 下一页
+  html += `<button class="page-btn ${currentPage === totalPages ? 'disabled' : ''}" onclick="goToPage(${currentPage + 1})">
+    <i class="fa-solid fa-chevron-right" style="font-size:11px;"></i>
+  </button>`;
+
+  pageNumbers.innerHTML = html;
+
+  // 跳转输入框
+  document.getElementById('jumpInput').value = currentPage;
+}
+
+function goToPage(page) {
+  const total = getFilteredData().length;
+  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  if (page < 1 || page > totalPages) return;
+  currentPage = page;
+  renderTable();
+}
+
+function handleJump(event) {
+  if (event.key === 'Enter') {
+    const page = parseInt(event.target.value);
+    if (!isNaN(page)) goToPage(page);
+  }
+}
+
+/* ==============================
+   选择/批量操作
+   ============================== */
+function toggleRow(id) {
+  if (selectedIds.has(id)) {
+    selectedIds.delete(id);
+  } else {
+    selectedIds.add(id);
+  }
+  renderTable();
+}
+
+function toggleSelectAll() {
+  var filteredData = getFilteredData();
+  const start = (currentPage - 1) * pageSize;
+  const end = start + pageSize;
+  const pageData = filteredData.slice(start, end);
+  const allSelected = pageData.every(row => selectedIds.has(row.id));
+
+  if (allSelected) {
+    pageData.forEach(row => selectedIds.delete(row.id));
+  } else {
+    pageData.forEach(row => selectedIds.add(row.id));
+  }
+  renderTable();
+}
+
+function updateHeaderCheckbox() {
+  var filteredData = getFilteredData();
+  const headerCheckbox = document.getElementById('headerCheckbox');
+  const start = (currentPage - 1) * pageSize;
+  const end = start + pageSize;
+  const pageData = filteredData.slice(start, end);
+
+  if (pageData.length === 0) {
+    headerCheckbox.className = 'checkbox';
+    return;
+  }
+
+  const selectedCount = pageData.filter(row => selectedIds.has(row.id)).length;
+  if (selectedCount === 0) {
+    headerCheckbox.className = 'checkbox';
+  } else if (selectedCount === pageData.length) {
+    headerCheckbox.className = 'checkbox checked';
+  } else {
+    headerCheckbox.className = 'checkbox indeterminate';
+  }
+}
+
+function updateBatchBar() {
+  const count = document.getElementById('batchCount');
+  const clearBtn = document.getElementById('batchClearBtn');
+  const divider = document.getElementById('batchDivider');
+  if (selectedIds.size > 0) {
+    count.style.display = '';
+    clearBtn.style.display = '';
+    divider.style.display = '';
+    count.textContent = `已选择 ${selectedIds.size} 项`;
+  } else {
+    count.style.display = 'none';
+    clearBtn.style.display = 'none';
+    divider.style.display = 'none';
+  }
+}
+
+function clearSelection() {
+  selectedIds.clear();
+  renderTable();
+}
+
+/* ==============================
+   下拉选择（普通下拉）
+   ============================== */
+function toggleDropdown(name) {
+  closeAllDropdowns();
+
+  if (name === 'user') {
+    const panel = document.getElementById('userPanel');
+    const trigger = document.getElementById('userTrigger');
+    panel.innerHTML = userList.map(u => `
+      <div class="dropdown-option" onclick="selectUser('${u}')">
+        <span>${u}</span>
+        <i class="fa-solid fa-check" style="display:none;"></i>
+      </div>
+    `).join('');
+    panel.classList.toggle('show');
+    trigger.classList.toggle('open');
+  } else if (name === 'pageSize') {
+    const panel = document.getElementById('pageSizePanel');
+    const trigger = document.getElementById('pageSizeTrigger');
+    panel.querySelectorAll('.dropdown-option').forEach(opt => {
+      const isActive = opt.textContent === document.getElementById('pageSizeValue').textContent;
+      opt.classList.toggle('selected', isActive);
+      const check = opt.querySelector('i');
+      if (check) check.style.display = isActive ? 'inline' : 'none';
+      if (!check) {
+        const i = document.createElement('i');
+        i.className = 'fa-solid fa-check';
+        i.style.display = isActive ? 'inline' : 'none';
+        opt.appendChild(i);
+      }
+    });
+    panel.classList.toggle('show');
+  } else if (name === 'avatar') {
+    const panel = document.getElementById('avatarPanel');
+    const wrapper = document.getElementById('avatarBtn');
+    panel.classList.toggle('show');
+    wrapper.classList.toggle('open');
+  }
+}
+
+function selectUser(value) {
+  const trigger = document.getElementById('userTrigger');
+  const valueEl = trigger.querySelector('.filter-input-value');
+  valueEl.textContent = value;
+  valueEl.classList.remove('placeholder');
+  document.getElementById('userPanel').classList.remove('show');
+  trigger.classList.remove('open');
+}
+
+function handleAvatarAction(action) {
+  document.getElementById('avatarPanel').classList.remove('show');
+  if (action === 'profile') {
+    showToast('跳转至个人中心', 'info');
+  } else if (action === 'logout') {
+    showToast('已退出登录', 'info');
+  }
+}
+
+function updateThemeToggle(theme) {
+  const toggle = document.getElementById('themeToggle');
+  if (!toggle) return;
+
+  const isLight = theme === 'light';
+  const label = isLight ? '切换为深色主题' : '切换为浅色主题';
+  toggle.setAttribute('aria-label', label);
+  toggle.setAttribute('aria-pressed', String(isLight));
+  toggle.setAttribute('title', label);
+  toggle.querySelector('i').className = isLight ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
+}
+
+function toggleTheme() {
+  const current = document.documentElement.dataset.theme || 'dark';
+  const next = current === 'light' ? 'dark' : 'light';
+  document.documentElement.dataset.theme = next;
+
+  try {
+    localStorage.setItem('vpp-theme', next);
+  } catch (e) {}
+
+  updateThemeToggle(next);
+}
+
+function updateNavLayoutToggle(layout) {
+  const toggle = document.getElementById('navLayoutToggle');
+  if (!toggle) return;
+
+  const isSide = layout === 'side';
+  const label = isSide ? '切换为顶部菜单' : '切换为左侧菜单';
+  toggle.setAttribute('aria-label', label);
+  toggle.setAttribute('aria-pressed', String(isSide));
+  toggle.setAttribute('title', label);
+  toggle.querySelector('i').className = isSide ? 'fa-solid fa-window-maximize' : 'fa-solid fa-table-columns';
+}
+
+function toggleNavLayout() {
+  const current = document.documentElement.dataset.navLayout || 'top';
+  const next = current === 'side' ? 'top' : 'side';
+  document.documentElement.dataset.navLayout = next;
+
+  try {
+    localStorage.setItem('vpp-nav-layout', next);
+  } catch (e) {}
+
+  updateNavLayoutToggle(next);
+  requestAnimationFrame(updateStickyShadows);
+}
+
+function changePageSize(size) {
+  pageSize = size;
+  document.getElementById('pageSizeValue').textContent = size + '条';
+  document.getElementById('pageSizePanel').classList.remove('show');
+  currentPage = 1;
+  renderTable();
+}
+
+/* ==============================
+   级联选择（单选 — 资源类型等）
+   ============================== */
+let cascaderState = { type: [null, null, null] };
+
+function toggleCascader(name) {
+  closeAllDropdowns();
+  const panel = document.getElementById(name + 'Panel');
+  const trigger = document.getElementById(name + 'Trigger');
+  const data = resourceTypeData;
+
+  ensureCascaderBody(panel);
+  renderCascaderColumn(name, data, 0, panel);
+  panel.classList.toggle('show');
+  trigger.classList.toggle('open');
+
+  const openColumns = panel.querySelectorAll('.cascader-column').length;
+  panel.style.width = (openColumns * 180) + 'px';
+}
+
+function renderCascaderColumn(name, items, level, panel) {
+  // 移除当前层级之后的列
+  const columns = panel.querySelectorAll('.cascader-column');
+  for (let i = level; i < columns.length; i++) {
+    columns[i].remove();
+  }
+
+  const col = document.createElement('div');
+  col.className = 'cascader-column';
+
+  items.forEach((item, idx) => {
+    const isSelected = cascaderState[name][level] === idx;
+    const label = typeof item === 'string' ? item : item.label;
+    const hasChildren = typeof item !== 'string' && item.children && item.children.length > 0;
+
+    const option = document.createElement('div');
+    option.className = 'cascader-option' + (isSelected ? ' is-active' : '');
+    option.innerHTML = `
+      <span class="el-cascader-node__label">${label}</span>
+      ${hasChildren ? '<i class="fa-solid fa-angle-right el-cascader-node__arrow"></i>' : ''}
+    `;
+
+    option.onclick = function(e) {
+      e.stopPropagation();
+      cascaderState[name][level] = idx;
+
+      // 清除更深层级的选择
+      for (let i = level + 1; i < cascaderState[name].length; i++) {
+        cascaderState[name][i] = null;
+      }
+
+      // 重新渲染当前列
+      renderCascaderColumn(name, items, level, panel);
+
+      // 如果有子级，渲染子级列
+      if (hasChildren) {
+        renderCascaderColumn(name, item.children, level + 1, panel);
+      } else {
+        // 叶子节点 — 设置选中值
+        setCascaderValue(name);
+        closeAllDropdowns();
+      }
+
+      // 更新面板宽度
+      const openColumns = panel.querySelectorAll('.cascader-column').length;
+      panel.style.width = (openColumns * 180) + 'px';
+    };
+
+    col.appendChild(option);
+  });
+
+  ensureCascaderBody(panel).appendChild(col);
+}
+
+function setCascaderValue(name) {
+  const state = cascaderState[name];
+  const data = resourceTypeData;
+  const trigger = document.getElementById(name + 'Trigger');
+  const valueEl = trigger.querySelector('.filter-input-value');
+
+  let path = [];
+  let current = data;
+
+  for (let i = 0; i < state.length; i++) {
+    if (state[i] === null) break;
+    const item = current[state[i]];
+    if (!item) break;
+    path.push(typeof item === 'string' ? item : item.label);
+    if (typeof item !== 'string' && item.children) {
+      current = item.children;
+    }
+  }
+
+  if (path.length > 0) {
+    valueEl.textContent = path.join(' / ');
+    valueEl.classList.remove('placeholder');
+  }
+}
+
+/* ==============================
+   区域多选级联（Element UI 风格）
+   ============================== */
+let regionMultiSelected = new Set();       // Set of leaf paths "江苏省 / 南京市 / 浦口区"
+let regionActivePath = [null, null, null]; // [provIdx, cityIdx, distIdx]
+
+function toggleMultiCascader(name) {
+  const panel = document.getElementById(name + 'Panel');
+  const trigger = document.getElementById(name + 'Trigger');
+
+  if (panel.classList.contains('show')) {
+    panel.classList.remove('show');
+    trigger.classList.remove('open');
+    return;
+  }
+
+  closeAllDropdowns();
+  regionActivePath = [null, null, null];
+  ensureCascaderBody(panel);       // 初始化列行容器
+  renderMultiColumn(0, panel);
+  addFooter(panel);
+  panel.classList.add('show');
+  trigger.classList.add('open');
+}
+
+/* 递归收集某节点下所有叶子路径 */
+function getLeafPaths(items, parentPath) {
+  let paths = [];
+  items.forEach(function(item) {
+    var cp = parentPath ? parentPath + ' / ' + item.label : item.label;
+    if (item.children) {
+      if (typeof item.children[0] === 'string') {
+        item.children.forEach(function(c) { paths.push(cp + ' / ' + c); });
+      } else {
+        paths = paths.concat(getLeafPaths(item.children, cp));
+      }
+    }
+  });
+  return paths;
+}
+
+/* 根据父路径和子节点结构，算出 check 状态 */
+function getCheckState(path, children) {
+  var leaves;
+  if (!children) return regionMultiSelected.has(path) ? 'all' : 'none';
+  if (typeof children[0] === 'string') {
+    leaves = children.map(function(c) { return path + ' / ' + c; });
+  } else {
+    leaves = getLeafPaths(children, path);
+  }
+  var sel = leaves.filter(function(p) { return regionMultiSelected.has(p); }).length;
+  if (sel === 0) return 'none';
+  if (sel === leaves.length) return 'all';
+  return 'partial';
+}
+
+/* 勾选 / 取消勾选某个节点及其所有后代 */
+function toggleNodeSelection(path, children) {
+  var leaves;
+  if (!children) {
+    leaves = [path];
+  } else if (typeof children[0] === 'string') {
+    leaves = children.map(function(c) { return path + ' / ' + c; });
+  } else {
+    leaves = getLeafPaths(children, path);
+  }
+  var allSel = leaves.every(function(p) { return regionMultiSelected.has(p); });
+  if (allSel) {
+    leaves.forEach(function(p) { regionMultiSelected.delete(p); });
+  } else {
+    leaves.forEach(function(p) { regionMultiSelected.add(p); });
+  }
+}
+
+/* 获取当前 level 的所有项（用于全选） */
+function getItemsAtLevel(level) {
+  if (level === 0) return { items: regionData, parentPath: '' };
+  if (level === 1) {
+    var pi = regionActivePath[0];
+    if (pi === null) return null;
+    var prov = regionData[pi];
+    return { items: prov.children, parentPath: prov.label };
+  }
+  if (level === 2) {
+    var pi2 = regionActivePath[0], ci = regionActivePath[1];
+    if (pi2 === null || ci === null) return null;
+    var city = regionData[pi2].children[ci];
+    return { items: city.children, parentPath: regionData[pi2].label + ' / ' + city.label };
+  }
+  return null;
+}
+
+/* 更新面板总宽度 */
+function updatePanelWidth(panel) {
+  var cols = panel.querySelectorAll('.cascader-column').length;
+  panel.style.width = (cols * 180) + 'px';
+}
+
+/* 获取/创建列行容器（所有级联列始终在同一行） */
+function ensureCascaderBody(panel) {
+  var body = panel.querySelector('.cascader-body');
+  if (!body) {
+    body = document.createElement('div');
+    body.className = 'cascader-body';
+    panel.appendChild(body);
+  }
+  return body;
+}
+
+/* 渲染一列 */
+function renderMultiColumn(level, panel) {
+  // 清除当前列及之后列 + footer
+  var columns = panel.querySelectorAll('.cascader-column');
+  for (var i = level; i < columns.length; i++) { columns[i].remove(); }
+  var oldFooter = panel.querySelector('.cascader-footer-bar');
+  if (oldFooter) oldFooter.remove();
+
+  var ctx = getItemsAtLevel(level);
+  if (!ctx) { addFooter(panel); updatePanelWidth(panel); return; }
+  var items = ctx.items, parentPath = ctx.parentPath;
+
+  var col = document.createElement('div');
+  col.className = 'cascader-column';
+
+  // ---- 全选行 ----
+  if (level < 2) {
+    // 收集当前列所有叶节点路径
+    var allLeaves = [];
+    items.forEach(function(item) {
+      var label = typeof item === 'string' ? item : item.label;
+      var children = typeof item === 'string' ? null : item.children;
+      var ip = parentPath ? parentPath + ' / ' + label : label;
+      if (!children) {
+        allLeaves.push(ip);
+      } else if (typeof children[0] === 'string') {
+        children.forEach(function(c) { allLeaves.push(ip + ' / ' + c); });
+      } else {
+        allLeaves = allLeaves.concat(getLeafPaths(children, ip));
+      }
+    });
+    var allSel = allLeaves.length > 0 && allLeaves.every(function(p) { return regionMultiSelected.has(p); });
+
+    var allRow = document.createElement('div');
+    allRow.className = 'cascader-option cascader-option--all';
+
+    var allCb = document.createElement('span');
+    allCb.className = 'cascader-checkbox' + (allSel ? ' checked' : '');
+    allCb.onclick = function(e) {
+      e.stopPropagation();
+      if (allSel) {
+        allLeaves.forEach(function(p) { regionMultiSelected.delete(p); });
+      } else {
+        allLeaves.forEach(function(p) { regionMultiSelected.add(p); });
+      }
+      updateRegionDisplay();
+      renderMultiColumn(level, panel);
+      // 保持子列展开
+      if (regionActivePath[level] !== null) renderMultiColumn(level + 1, panel);
+      addFooter(panel);
+      updatePanelWidth(panel);
+    };
+
+    var allLabel = document.createElement('span');
+    allLabel.className = 'el-cascader-node__label';
+    allLabel.textContent = '全选';
+    allLabel.style.fontWeight = '500';
+
+    allRow.appendChild(allCb);
+    allRow.appendChild(allLabel);
+    col.appendChild(allRow);
+  }
+
+  // ---- 普通选项 ----
+  items.forEach(function(item, idx) {
+    var itemLabel = typeof item === 'string' ? item : item.label;
+    var itemChildren = (typeof item === 'string') ? null : item.children;
+    var itemPath = parentPath ? parentPath + ' / ' + itemLabel : itemLabel;
+    var isLeaf = !itemChildren || (itemChildren && typeof itemChildren[0] === 'string' && level === 2);
+    var hasChildren = itemChildren && itemChildren.length > 0 && level < 2;
+    var checkState = getCheckState(itemPath, (typeof item === 'string') ? null : itemChildren);
+    var isActive = regionActivePath[level] === idx;
+    var isChecked = checkState === 'all';
+
+    var cbClass = checkState === 'all' ? ' checked' : (checkState === 'partial' ? ' partial' : '');
+    var rowClass = 'cascader-option';
+    if (isActive) rowClass += ' is-active';
+    if (isChecked) rowClass += ' is-checked';
+
+    var row = document.createElement('div');
+    row.className = rowClass;
+
+    // checkbox
+    var cb = document.createElement('span');
+    cb.className = 'cascader-checkbox' + cbClass;
+    cb.onclick = function(e) {
+      e.stopPropagation();
+      toggleNodeSelection(itemPath, (typeof item === 'string') ? null : itemChildren);
+      updateRegionDisplay();
+      renderMultiColumn(level, panel);
+      if (hasChildren && isActive) { renderMultiColumn(level + 1, panel); }
+      addFooter(panel);
+      updatePanelWidth(panel);
+    };
+
+    // label
+    var label = document.createElement('span');
+    label.className = 'el-cascader-node__label';
+    label.textContent = itemLabel;
+
+    row.appendChild(cb);
+    row.appendChild(label);
+
+    // arrow
+    if (hasChildren) {
+      var arrow = document.createElement('i');
+      arrow.className = 'fa-solid fa-angle-right el-cascader-node__arrow';
+      row.appendChild(arrow);
+    }
+
+    // 点击行 → 展开下一级
+    row.onclick = function(e) {
+      e.stopPropagation(); // 阻止冒泡到 document → closeAllDropdowns
+      if (e.target === cb) return; // checkbox 已单独处理
+      if (!hasChildren) return;
+      regionActivePath[level] = idx;
+      for (var j = level + 1; j < 3; j++) regionActivePath[j] = null;
+      renderMultiColumn(level, panel);
+      renderMultiColumn(level + 1, panel);
+      addFooter(panel);
+      updatePanelWidth(panel);
+    };
+
+    col.appendChild(row);
+  });
+
+  ensureCascaderBody(panel).appendChild(col);
+  updatePanelWidth(panel);
+}
+
+/* 追加底部操作栏 */
+function addFooter(panel) {
+  var oldFooter = panel.querySelector('.cascader-footer-bar');
+  if (oldFooter) oldFooter.remove();
+  var count = regionMultiSelected.size;
+  var footer = document.createElement('div');
+  footer.className = 'cascader-footer-bar';
+  footer.innerHTML =
+    '<span class="cascader-footer-bar-count">已选 ' + count + ' 项</span>' +
+    '<div style="display:flex;gap:6px;flex-shrink:0;min-width:0;">' +
+      '<button class="cascader-footer-bar-btn" onclick="event.stopPropagation();regionMultiSelected.clear();regionActivePath=[null,null,null];updateRegionDisplay();closeAllDropdowns();applyFilters();">重置</button>' +
+      '<button class="cascader-footer-bar-btn cascader-footer-bar-btn--confirm" onclick="event.stopPropagation();closeAllDropdowns();applyFilters();">确认</button>' +
+    '</div>';
+  panel.appendChild(footer);
+}
+
+/* ---------- Trigger 展示 ---------- */
+
+function updateRegionDisplay() {
+  var tagsContainer = document.getElementById('regionTags');
+  var countEl = document.getElementById('regionCount');
+  var count = regionMultiSelected.size;
+
+  if (count === 0) {
+    tagsContainer.innerHTML = '<span class="filter-input-placeholder">请选择省 / 市 / 区县</span>';
+    countEl.style.display = 'none';
+    return;
+  }
+
+  countEl.style.display = '';
+  countEl.textContent = count + '项';
+
+  var items = Array.from(regionMultiSelected);
+  var maxShow = 2;
+  var html = '';
+  items.slice(0, maxShow).forEach(function(item) {
+    var parts = item.split(' / ');
+    var lastPart = parts[parts.length - 1];
+    var escaped = item.replace(/'/g, "\\'");
+    html += '<span class="filter-input-tag" title="' + item + '">' + lastPart +
+      '<span class="filter-input-tag-close" data-path="' + escaped + '" onclick="event.stopPropagation();removeRegionTag(this);">\u00d7</span></span>';
+  });
+  if (items.length > maxShow) {
+    html += '<span class="filter-input-tag-more">+' + (items.length - maxShow) + '</span>';
+  }
+  tagsContainer.innerHTML = html;
+}
+
+function removeRegionTag(el) {
+  var path = el.getAttribute('data-path');
+  regionMultiSelected.delete(path);
+  updateRegionDisplay();
+}
+
+/* ==============================
+   表单弹窗 — 资源类型下拉（单选）
+   ============================== */
+const formTypeOptions = ['充电桩', '储能', '光伏', '负荷', '风电', '水电'];
+
+function toggleFormTypeDropdown() {
+  closeAllDropdowns();
+  const panel = document.getElementById('formTypePanel');
+  const trigger = document.getElementById('formTypeTrigger');
+  const currentValueEl = document.getElementById('formTypeValue');
+  const currentValue = currentValueEl.classList.contains('placeholder') ? '' : currentValueEl.textContent.trim();
+
+  panel.innerHTML = formTypeOptions.map(t => `
+    <div class="dropdown-option ${t === currentValue ? 'selected' : ''}" onclick="selectFormType('${t}')">
+      <span>${t}</span>
+      ${t === currentValue ? '<i class="fa-solid fa-check"></i>' : ''}
+    </div>
+  `).join('');
+  panel.classList.toggle('show');
+  trigger.classList.toggle('open');
+}
+
+function selectFormType(value) {
+  const valueEl = document.getElementById('formTypeValue');
+  valueEl.textContent = value;
+  valueEl.classList.remove('placeholder');
+  document.getElementById('formTypePanel').classList.remove('show');
+  document.getElementById('formTypeTrigger').classList.remove('open');
+}
+
+/* ==============================
+   表单弹窗 — 区域级联（单选）
+   ============================== */
+let formRegionState = [null, null, null];
+
+function toggleFormRegionCascader() {
+  closeAllDropdowns();
+  const panel = document.getElementById('formRegionPanel');
+  const trigger = document.getElementById('formRegionTrigger');
+
+  renderFormRegionColumn(0, panel);
+  panel.classList.toggle('show');
+  trigger.classList.toggle('open');
+
+  const openColumns = panel.querySelectorAll('.cascader-column').length;
+  panel.style.width = (openColumns * 180) + 'px';
+}
+
+function renderFormRegionColumn(level, panel) {
+  const columns = panel.querySelectorAll('.cascader-column');
+  for (let i = level; i < columns.length; i++) {
+    columns[i].remove();
+  }
+
+  let items;
+  if (level === 0) {
+    items = regionData;
+  } else if (level === 1) {
+    if (formRegionState[0] === null) return;
+    items = regionData[formRegionState[0]].children;
+  } else if (level === 2) {
+    if (formRegionState[0] === null || formRegionState[1] === null) return;
+    items = regionData[formRegionState[0]].children[formRegionState[1]].children;
+  } else {
+    return;
+  }
+
+  const col = document.createElement('div');
+  col.className = 'cascader-column';
+
+  items.forEach((item, idx) => {
+    const label = typeof item === 'string' ? item : item.label;
+    const hasChildren = typeof item !== 'string' && item.children && item.children.length > 0 && level < 2;
+    const isSelected = formRegionState[level] === idx;
+
+    const option = document.createElement('div');
+    option.className = 'cascader-option' + (isSelected ? ' is-active' : '');
+    option.innerHTML = `
+      <span class="el-cascader-node__label">${label}</span>
+      ${hasChildren ? '<i class="fa-solid fa-angle-right el-cascader-node__arrow"></i>' : ''}
+    `;
+
+    option.onclick = function(e) {
+      e.stopPropagation();
+      formRegionState[level] = idx;
+      for (let i = level + 1; i < 3; i++) formRegionState[i] = null;
+
+      renderFormRegionColumn(level, panel);
+
+      if (hasChildren) {
+        renderFormRegionColumn(level + 1, panel);
+      } else {
+        setFormRegionValue();
+        closeAllDropdowns();
+      }
+
+      const openColumns = panel.querySelectorAll('.cascader-column').length;
+      panel.style.width = (openColumns * 180) + 'px';
+    };
+
+    col.appendChild(option);
+  });
+
+  panel.appendChild(col);
+}
+
+function setFormRegionValue() {
+  let path = [];
+  let current = regionData;
+  for (let i = 0; i < 3; i++) {
+    if (formRegionState[i] === null) break;
+    const item = current[formRegionState[i]];
+    if (!item) break;
+    path.push(typeof item === 'string' ? item : item.label);
+    if (item.children) current = item.children;
+  }
+
+  if (path.length > 0) {
+    const valueEl = document.getElementById('formRegionValue');
+    valueEl.textContent = path.join(' / ');
+    valueEl.classList.remove('placeholder');
+  }
+}
+
+/* ==============================
+   关闭所有下拉
+   ============================== */
+function closeAllDropdowns() {
+  document.querySelectorAll('.dropdown-panel.show').forEach(p => p.classList.remove('show'));
+  document.querySelectorAll('.cascader-panel.show').forEach(p => p.classList.remove('show'));
+  document.querySelectorAll('.filter-input.open').forEach(t => t.classList.remove('open'));
+  const avatarWrapper = document.getElementById('avatarBtn');
+  if (avatarWrapper) avatarWrapper.classList.remove('open');
+}
+
+// 点击外部关闭
+document.addEventListener('click', function(e) {
+  const navDropdown = e.target.closest('.header-nav-dropdown');
+  if (navDropdown && !e.target.closest('.header-submenu-item')) {
+    const willOpen = !navDropdown.classList.contains('open');
+    document.querySelectorAll('.header-nav-dropdown.open').forEach(item => {
+      item.classList.remove('open');
+      item.setAttribute('aria-expanded', 'false');
+    });
+    navDropdown.classList.toggle('open', willOpen);
+    navDropdown.setAttribute('aria-expanded', String(willOpen));
+    return;
+  }
+  document.querySelectorAll('.header-nav-dropdown.open').forEach(item => {
+    item.classList.remove('open');
+    item.setAttribute('aria-expanded', 'false');
+  });
+  if (!e.target.closest('.filter-control') && !e.target.closest('.page-size-select') && !e.target.closest('.header-avatar-wrapper')) {
+    closeAllDropdowns();
+  }
+});
+
+/* ==============================
+   筛选操作
+   ============================== */
+function toggleFilterSection() {
+  const section = document.querySelector('.filter-section');
+  const toggle = document.getElementById('filterToggle');
+  const isCollapsed = section.classList.toggle('is-collapsed');
+
+  if (isCollapsed) closeAllDropdowns();
+  toggle.setAttribute('aria-expanded', String(!isCollapsed));
+  toggle.querySelector('span').textContent = isCollapsed ? '展开' : '收起';
+}
+
+function applyFilters() {
+  currentPage = 1;
+  showToast('查询完成', 'success');
+  renderTable();
+}
+
+function resetFilters() {
+  // 重置区域多选
+  regionMultiSelected.clear();
+  regionActivePath = [null, null, null];
+  updateRegionDisplay();
+  // 重置资源类型
+  cascaderState = { type: [null, null, null] };
+  document.querySelectorAll('.filter-input-value').forEach(function(el) {
+    el.textContent = el.getAttribute('data-default') || '';
+    el.classList.add('placeholder');
+  });
+  const typeTrigger = document.getElementById('typeTrigger');
+  const userTrigger = document.getElementById('userTrigger');
+  typeTrigger.querySelector('.filter-input-value').textContent = '请选择资源类别';
+  typeTrigger.querySelector('.filter-input-value').classList.add('placeholder');
+  userTrigger.querySelector('.filter-input-value').textContent = '请选择归属企业';
+  userTrigger.querySelector('.filter-input-value').classList.add('placeholder');
+  document.getElementById('searchInput').value = '';
+
+  showToast('已重置筛选条件', 'info');
+}
+
+/* ==============================
+   新增/编辑弹窗
+   ============================== */
+function openAddModal() {
+  editingId = null;
+  document.getElementById('modalTitle').textContent = '新增资源';
+  document.querySelectorAll('#formModal input, #formModal textarea').forEach(el => el.value = '');
+  // Reset custom selectors
+  const formTypeValue = document.getElementById('formTypeValue');
+  formTypeValue.textContent = '请选择资源类型';
+  formTypeValue.classList.add('placeholder');
+  formRegionState = [null, null, null];
+  const formRegionValue = document.getElementById('formRegionValue');
+  formRegionValue.textContent = '请选择省 / 市 / 区县';
+  formRegionValue.classList.add('placeholder');
+  showModal('formModal');
+}
+
+function openEditModal(id) {
+  const row = tableData.find(r => r.id === id);
+  if (!row) return;
+
+  editingId = id;
+  document.getElementById('modalTitle').textContent = '编辑资源';
+  document.getElementById('formName').value = row.name;
+  document.getElementById('formAccount').value = row.account;
+  document.getElementById('formOperator').value = row.operator;
+  document.getElementById('formUser').value = row.user;
+  // Set custom type selector
+  const formTypeValue = document.getElementById('formTypeValue');
+  formTypeValue.textContent = row.type;
+  formTypeValue.classList.remove('placeholder');
+  document.getElementById('formVoltage').value = row.voltage;
+  document.getElementById('formCapacity').value = row.capacity;
+  document.getElementById('formAdjustable').value = row.adjustable;
+  // Set custom region selector
+  formRegionState = [null, null, null];
+  const formRegionValue = document.getElementById('formRegionValue');
+  formRegionValue.textContent = row.region;
+  formRegionValue.classList.remove('placeholder');
+  showModal('formModal');
+}
+
+function saveResource() {
+  const name = document.getElementById('formName').value.trim();
+  const account = document.getElementById('formAccount').value.trim();
+
+  if (!name) {
+    showToast('请输入资源名称', 'error');
+    return;
+  }
+  if (!account) {
+    showToast('请输入户号', 'error');
+    return;
+  }
+
+  // Read from custom selectors
+  const formTypeValueEl = document.getElementById('formTypeValue');
+  const type = formTypeValueEl.classList.contains('placeholder') ? '' : formTypeValueEl.textContent.trim();
+  const formRegionValueEl = document.getElementById('formRegionValue');
+  const region = formRegionValueEl.classList.contains('placeholder') ? '' : formRegionValueEl.textContent.trim();
+
+  const now = new Date();
+  const timeStr = now.getFullYear() + '-' +
+    String(now.getMonth() + 1).padStart(2, '0') + '-' +
+    String(now.getDate()).padStart(2, '0') + ' ' +
+    String(now.getHours()).padStart(2, '0') + ':' +
+    String(now.getMinutes()).padStart(2, '0');
+
+  if (editingId) {
+    const row = tableData.find(r => r.id === editingId);
+    if (row) {
+      row.name = name;
+      row.account = account;
+      row.operator = document.getElementById('formOperator').value.trim() || row.operator;
+      row.user = document.getElementById('formUser').value.trim() || row.user;
+      row.type = type || row.type;
+      row.voltage = document.getElementById('formVoltage').value.trim() || row.voltage;
+      row.capacity = parseInt(document.getElementById('formCapacity').value) || row.capacity;
+      row.adjustable = parseInt(document.getElementById('formAdjustable').value) || row.adjustable;
+      row.region = region || row.region;
+      row.updateTime = timeStr;
+    }
+    showToast('资源已更新', 'success');
+  } else {
+    const newId = Math.max(...tableData.map(r => r.id), 0) + 1;
+    tableData.unshift({
+      id: newId,
+      name: name,
+      operator: document.getElementById('formOperator').value.trim() || '-',
+      user: document.getElementById('formUser').value.trim() || '-',
+      account: account,
+      region: region || '-',
+      type: type || '负荷',
+      capacity: parseInt(document.getElementById('formCapacity').value) || 0,
+      adjustable: parseInt(document.getElementById('formAdjustable').value) || 0,
+      voltage: document.getElementById('formVoltage').value.trim() || '-',
+      updateTime: timeStr
+    });
+    showToast('资源已新增', 'success');
+  }
+
+  closeModal();
+  renderTable();
+}
+
+/* ==============================
+   删除操作
+   ============================== */
+function openDeleteModal(id) {
+  deletingId = id;
+  const row = tableData.find(r => r.id === id);
+  document.getElementById('deleteName').textContent = row ? row.name : '该资源';
+  showModal('deleteModal');
+}
+
+function confirmDelete() {
+  if (deletingId) {
+    tableData = tableData.filter(r => r.id !== deletingId);
+    selectedIds.delete(deletingId);
+    deletingId = null;
+    closeDeleteModal();
+    renderTable();
+    showToast('资源已删除', 'success');
+  }
+}
+
+function confirmBatchDelete() {
+  if (selectedIds.size === 0) return;
+  const count = selectedIds.size;
+  tableData = tableData.filter(r => !selectedIds.has(r.id));
+  selectedIds.clear();
+  closeBatchDeleteModal();
+  renderTable();
+  showToast(`已删除 ${count} 项资源`, 'success');
+}
+
+function batchDelete() {
+  if (selectedIds.size === 0) {
+    showToast('请先勾选要删除的资源', 'warning');
+    return;
+  }
+  document.getElementById('batchDeleteCount').textContent = selectedIds.size;
+  showModal('batchDeleteModal');
+}
+
+/* ==============================
+   导出
+   ============================== */
+function exportAll() {
+  showToast(`正在导出 ${tableData.length} 条数据...`, 'info');
+}
+
+function exportSelected() {
+  showToast(`正在导出 ${selectedIds.size} 条选中数据...`, 'info');
+}
+
+/* ==============================
+   弹窗控制
+   ============================== */
+function showModal(id) {
+  document.getElementById('overlay').classList.add('show');
+  document.getElementById(id).classList.add('show');
+}
+
+function closeModal() {
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('formModal').classList.remove('show');
+  closeAllDropdowns();
+}
+
+function closeDeleteModal() {
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('deleteModal').classList.remove('show');
+  deletingId = null;
+}
+
+function closeBatchDeleteModal() {
+  document.getElementById('overlay').classList.remove('show');
+  document.getElementById('batchDeleteModal').classList.remove('show');
+}
+
+/* ==============================
+   Toast 通知
+   ============================== */
+function showToast(message, type = 'success') {
+  const toast = document.getElementById('toast');
+  const msg = document.getElementById('toastMessage');
+  const icon = toast.querySelector('i');
+
+  msg.textContent = message;
+  toast.className = 'toast ' + type;
+
+  const icons = {
+    success: 'fa-solid fa-circle-check',
+    error: 'fa-solid fa-circle-exclamation',
+    info: 'fa-solid fa-circle-info'
+  };
+  icon.className = icons[type] || icons.success;
+
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+/* ==============================
+   固定列滚动阴影切换（表格规范 §12.5）
+   ============================== */
+function updateStickyShadows() {
+  const scroll = document.querySelector('.table-scroll');
+  if (!scroll) return;
+  const threshold = 1;
+  if (scroll.scrollLeft <= threshold) {
+    scroll.classList.add('no-left-shadow');
+  } else {
+    scroll.classList.remove('no-left-shadow');
+  }
+  if (scroll.scrollLeft + scroll.clientWidth >= scroll.scrollWidth - threshold) {
+    scroll.classList.add('no-right-shadow');
+  } else {
+    scroll.classList.remove('no-right-shadow');
+  }
+}
+
+function handleTableScroll() {
+  const scroll = document.querySelector('.table-scroll');
+  if (!scroll) return;
+  updateStickyShadows();
+}
+
+const tableScrollEl = document.querySelector('.table-scroll');
+if (tableScrollEl) {
+  tableScrollEl.addEventListener('scroll', handleTableScroll);
+}
+
+/* ==============================
+   初始化
+   ============================== */
+renderTable();
+updateStickyShadows();
+updateThemeToggle(document.documentElement.dataset.theme || 'dark');
+updateNavLayoutToggle(document.documentElement.dataset.navLayout || 'top');
+</script>
+
+</body>
+</html>

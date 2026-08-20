@@ -1,0 +1,29 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect x="0.5" y="0.5" width="31" height="31" rx="9.5" fill="url(#base-gradient)" stroke="#1776E5" stroke-opacity="0.3" filter="url(#base-shadow)"/>
+  <path d="M2 10C2 5.582 5.582 2 10 2h12c4.418 0 8 3.582 8 8" stroke="#FFFFFF" stroke-opacity="0.05"/>
+  <g transform="translate(6 6) scale(.625)">
+    <circle cx="16" cy="16" r="14.5" stroke="#4897F3" stroke-opacity="0.28" stroke-width="1.2"/>
+    <path d="M16 4 5 24h22L16 4Z" stroke="#4897F3" stroke-opacity="0.28"/>
+    <circle cx="16" cy="4" r="2.6" fill="#7FB3EF" fill-opacity="0.92"/>
+    <circle cx="5" cy="24" r="2.4" fill="#7FB3EF" fill-opacity="0.88"/>
+    <circle cx="27" cy="24" r="2.4" fill="#7FB3EF" fill-opacity="0.88"/>
+    <path d="M16 6.6V10M7.4 21.6 11 18M24.6 21.6 21 18" stroke="#7FB3EF" stroke-opacity="0.82" stroke-width="1.8" stroke-linecap="round"/>
+    <circle cx="16" cy="16" r="7" stroke="#7FB3EF" stroke-opacity="0.26" stroke-width="1.8"/>
+    <circle cx="16" cy="16" r="5" fill="url(#core-gradient)" stroke="#FFFFFF" stroke-opacity="0.5"/>
+  </g>
+  <defs>
+    <linearGradient id="base-gradient" x1="4" y1="2" x2="29" y2="31" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#061D35"/>
+      <stop offset="0.35" stop-color="#0B2B4F"/>
+      <stop offset="1" stop-color="#114480"/>
+    </linearGradient>
+    <radialGradient id="core-gradient" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(14 13.75) rotate(48.37) scale(9.41)">
+      <stop stop-color="#FFFFFF"/>
+      <stop offset="0.22" stop-color="#D6E8FF"/>
+      <stop offset="1" stop-color="#5BA0F5"/>
+    </radialGradient>
+    <filter id="base-shadow" x="-5" y="-4" width="42" height="43" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#030C1B" flood-opacity="0.5"/>
+    </filter>
+  </defs>
+</svg>
