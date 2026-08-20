@@ -70,6 +70,9 @@ button,input{font:inherit}.header{position:fixed;inset:0 0 auto 0;height:var(--h
 /* 固定纵轴使用窄遮罩，避免滚动内容穿过刻度，同时减少对首个横轴标签的覆盖。 */
 .fixed-y-axis{background:linear-gradient(90deg,var(--card-bg) 0 42px,rgba(13,33,55,.78) 44px,transparent 48px)}
 :root[data-theme="light"] .fixed-y-axis{background:linear-gradient(90deg,var(--card-bg) 0 42px,rgba(255,255,255,.82) 44px,transparent 48px)}
+.filter-row{grid-template-columns:minmax(0,1fr);gap:16px}.filter-row .label{margin-bottom:6px}.filter-row .control{padding:0 16px}.filter-row .actions{grid-column:auto;justify-content:flex-start;gap:4px}.filter-row .actions .btn{width:64px;padding:0 16px}
+@media(min-width:768px){.filter-row{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(min-width:1200px){.filter-row{grid-template-columns:repeat(6,minmax(0,1fr))}}
 </style>
 <link rel="stylesheet" href="shared-primary-menu-active.css">
 </head>
@@ -93,7 +96,7 @@ button,input{font:inherit}.header{position:fixed;inset:0 0 auto 0;height:var(--h
     <div class="filter-row">
       <div class="field"><label class="label">日期范围</label><div class="control" id="dateControl" onclick="toggleDropdown('dateDropdown')"><span>2026-08-12 00:00 ~ 2026-08-12 23:59</span><i class="fa-regular fa-calendar"></i></div><div class="dropdown" id="dateDropdown"><div class="option" onclick="selectDate('2026-08-12 00:00 ~ 2026-08-12 23:59')">今日</div><div class="option" onclick="selectDate('2026-08-11 00:00 ~ 2026-08-11 23:59')">昨日</div><div class="option" onclick="selectDate('2026-08-06 00:00 ~ 2026-08-12 23:59')">近 7 日</div></div></div>
       <div class="field"><label class="label">事件名称</label><div class="control" id="eventControl" onclick="toggleDropdown('eventDropdown')"><span>迎峰度夏日前削峰调控</span><i class="fa-solid fa-chevron-down"></i></div><div class="dropdown" id="eventDropdown"></div></div>
-      <div class="actions"><button class="btn btn-primary" onclick="queryEvent()"><i class="fa-solid fa-magnifying-glass"></i>查询</button><button class="btn btn-ghost" onclick="resetFilter()"><i class="fa-solid fa-rotate-left"></i>重置</button></div>
+      <div class="actions"><button class="btn btn-primary btn-md" onclick="queryEvent()"><i class="fa-solid fa-magnifying-glass"></i>查询</button><button class="btn btn-ghost btn-md" onclick="resetFilter()"><i class="fa-solid fa-rotate-left"></i>重置</button></div>
     </div>
   </section>
 
