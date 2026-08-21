@@ -64,3 +64,11 @@
 :root[data-nav-layout="side"] .header-nav-item.active::after { left: 0; right: auto; top: 18%; bottom: 18%; width: 2px; height: auto; transform:none; background: var(--primary-400, var(--primary-light)); }
 :root[data-nav-layout="side"] .header-submenu { top: 0; left: calc(100% + 4px); border-radius: 8px; }
 :root[data-nav-layout="side"] .header-logo { border-right: 0; }
+
+/* Shared breadcrumb component. */
+.breadcrumb { position: static; height: 40px; min-height: 40px; display: flex; align-items: center; margin: 0 0 16px; padding: 0; background: transparent; border-bottom: 1px solid var(--border-subtle); }
+.breadcrumb-list { display: flex; align-items: center; gap: 8px; font-size: 12px; line-height: 1.4; }
+.breadcrumb-item { color: var(--text-secondary); cursor: pointer; transition: color 150ms ease; }
+.breadcrumb-item:hover { color: var(--primary-400); }
+.breadcrumb-item.current, .breadcrumb-item.current:hover { color: var(--text-secondary); cursor: default; }
+.breadcrumb-separator { color: var(--text-disabled); font-size: 12px; }

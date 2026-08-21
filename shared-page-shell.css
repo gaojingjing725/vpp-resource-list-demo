@@ -1,0 +1,5 @@
+* { box-sizing:border-box; }
+body { margin:0; background:var(--page-bg); color:var(--text-primary); font-family:var(--font-sans); font-size:14px; }
+.main { position:fixed; inset:var(--header-h) 0 0; min-width:0; padding:0 24px 24px; overflow:auto; transition:left 200ms ease; }
+:root[data-nav-layout="side"] .main { left:var(--nav-sidebar-w,220px); }
+@media (max-width:767px) { .main { padding-left:12px; padding-right:12px; } }

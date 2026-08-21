@@ -1,0 +1,299 @@
+- generic [ref=e1]:
+  - banner [ref=e2]:
+    - generic [ref=e3]:
+      - generic [ref=e4]: 虚拟电厂智慧运营平台
+      - navigation [ref=e18]:
+        - generic [ref=e19] [cursor=pointer]: 首页
+        - generic [ref=e20] [cursor=pointer]: 基础管理
+        - generic [ref=e21] [cursor=pointer]: 资源池管理
+        - generic [ref=e22] [cursor=pointer]: 运行监测
+        - generic [ref=e23] [cursor=pointer]: 协调控制
+        - generic [ref=e24] [cursor=pointer]: 物联采集
+        - generic [ref=e25] [cursor=pointer]: 系统管理
+        - generic [ref=e26] [cursor=pointer]: 需求响应
+    - generic [ref=e28] [cursor=pointer]:
+      - generic [ref=e29]: GJ
+      - generic [ref=e30]: 
+      - text:  
+  - generic [ref=e32]:
+    - generic [ref=e33] [cursor=pointer]: 
+    - generic [ref=e35]: 
+    - generic [ref=e37] [cursor=pointer]: 资源池管理
+    - generic [ref=e38]: 
+    - generic [ref=e40]: 资源管理
+  - generic [ref=e41]:
+    - generic [ref=e42]:
+      - generic [ref=e43]:
+        - generic [ref=e44]:
+          - generic [ref=e45]: 区域
+          - generic [ref=e47] [cursor=pointer]:
+            - generic [ref=e48]: 请选择省 / 市 / 区县
+            - generic: 
+        - generic [ref=e50]:
+          - generic [ref=e51]: 所属用户
+          - generic [ref=e54] [cursor=pointer]:
+            - generic [ref=e55]: 请选择归属企业
+            - generic: 
+        - generic [ref=e56]:
+          - generic [ref=e57]: 资源类型
+          - generic [ref=e60] [cursor=pointer]:
+            - generic [ref=e61]: 请选择资源类别
+            - generic: 
+        - generic [ref=e62]:
+          - generic [ref=e63]: 资源名称
+          - generic [ref=e64]:
+            - generic: 
+            - textbox "请输入资源站点名称" [ref=e65]
+      - generic [ref=e66]:
+        - button " 重置" [ref=e67] [cursor=pointer]:
+          - generic [ref=e68]: 
+          - text: 重置
+        - button " 查询" [active] [ref=e69] [cursor=pointer]:
+          - generic [ref=e70]: 
+          - text: 查询
+    - generic [ref=e71]:
+      - button "+ 新增资源" [ref=e72] [cursor=pointer]:
+        - generic [ref=e73]: +
+        - text: 新增资源
+      - button " 批量删除" [ref=e74] [cursor=pointer]:
+        - generic [ref=e75]: 
+        - text: 批量删除
+      - button " 导出" [ref=e77] [cursor=pointer]:
+        - generic [ref=e78]: 
+        - text: 导出
+    - generic [ref=e79]:
+      - table [ref=e81]:
+        - rowgroup [ref=e82]:
+          - row [ref=e83]:
+            - columnheader [ref=e84]
+            - columnheader "资源名称" [ref=e86]
+            - columnheader "所属运营商" [ref=e87]
+            - columnheader "所属用户" [ref=e88]
+            - columnheader "户号" [ref=e89]
+            - columnheader "区域" [ref=e90]
+            - columnheader "资源类型" [ref=e91]
+            - columnheader "资源容量(kW)" [ref=e92]
+            - columnheader "可调容量(kW)" [ref=e93]
+            - columnheader "电压等级" [ref=e94]
+            - columnheader "更新时间" [ref=e95]
+            - columnheader "操作" [ref=e96]
+        - rowgroup [ref=e97]:
+          - row [ref=e296]:
+            - cell [ref=e297]
+            - cell "浦东新区充电站A" [ref=e299]
+            - cell "国网上海电动车服务公司" [ref=e300]
+            - cell "国网江苏省电力有限公司" [ref=e301]
+            - cell "SH-PD-2024-0012" [ref=e302]
+            - cell "上海市 / 浦东新区" [ref=e303]
+            - cell [ref=e304]
+            - cell "1,200" [ref=e307]
+            - cell "800" [ref=e308]
+            - cell "10kV" [ref=e309]
+            - cell "2026-07-28 14:32" [ref=e310]
+            - cell [ref=e311]:
+              - button "编辑" [ref=e313] [cursor=pointer]
+          - row [ref=e314]:
+            - cell [ref=e315]
+            - cell "苏州工业园区储能电站" [ref=e317]
+            - cell "华能江苏能源开发有限公司" [ref=e318]
+            - cell "华能国际电力股份有限公司" [ref=e319]
+            - cell "JS-SZ-2024-0085" [ref=e320]
+            - cell "江苏省 / 苏州市 / 工业园区" [ref=e321]
+            - cell [ref=e322]
+            - cell "5,000" [ref=e325]
+            - cell "3,500" [ref=e326]
+            - cell "35kV" [ref=e327]
+            - cell "2026-07-27 09:15" [ref=e328]
+            - cell [ref=e329]:
+              - button "编辑" [ref=e331] [cursor=pointer]
+          - row [ref=e332]:
+            - cell [ref=e333]
+            - cell "杭州余杭屋顶光伏项目" [ref=e335]
+            - cell "正泰新能源开发有限公司" [ref=e336]
+            - cell "国家电投集团江苏电力有限公司" [ref=e337]
+            - cell "ZJ-HZ-2024-0231" [ref=e338]
+            - cell "浙江省 / 杭州市 / 余杭区" [ref=e339]
+            - cell [ref=e340]
+            - cell "3,000" [ref=e343]
+            - cell "1,800" [ref=e344]
+            - cell "10kV" [ref=e345]
+            - cell "2026-07-26 16:48" [ref=e346]
+            - cell [ref=e347]:
+              - button "编辑" [ref=e349] [cursor=pointer]
+          - row [ref=e350]:
+            - cell [ref=e351]
+            - cell "南京江北工业负荷群" [ref=e353]
+            - cell "国网江苏省电力有限公司" [ref=e354]
+            - cell "国网江苏省电力有限公司" [ref=e355]
+            - cell "JS-NJ-2024-0156" [ref=e356]
+            - cell "江苏省 / 南京市 / 浦口区" [ref=e357]
+            - cell [ref=e358]
+            - cell "8,000" [ref=e361]
+            - cell "2,000" [ref=e362]
+            - cell "35kV" [ref=e363]
+            - cell "2026-07-25 11:20" [ref=e364]
+            - cell [ref=e365]:
+              - button "编辑" [ref=e367] [cursor=pointer]
+          - row [ref=e368]:
+            - cell [ref=e369]
+            - cell "深圳南山充电站B" [ref=e371]
+            - cell "南方电网电动车服务公司" [ref=e372]
+            - cell "华润电力控股有限公司" [ref=e373]
+            - cell "GD-SZ-2024-0342" [ref=e374]
+            - cell "广东省 / 深圳市 / 南山区" [ref=e375]
+            - cell [ref=e376]
+            - cell "1,800" [ref=e379]
+            - cell "1,200" [ref=e380]
+            - cell "10kV" [ref=e381]
+            - cell "2026-07-24 08:05" [ref=e382]
+            - cell [ref=e383]:
+              - button "编辑" [ref=e385] [cursor=pointer]
+          - row [ref=e386]:
+            - cell [ref=e387]
+            - cell "宁波鄞州分布式光伏" [ref=e389]
+            - cell "隆基绿能科技股份有限公司" [ref=e390]
+            - cell "中广核新能源有限公司" [ref=e391]
+            - cell "ZJ-NB-2024-0178" [ref=e392]
+            - cell "浙江省 / 宁波市 / 鄞州区" [ref=e393]
+            - cell [ref=e394]
+            - cell "2,500" [ref=e397]
+            - cell "1,500" [ref=e398]
+            - cell "10kV" [ref=e399]
+            - cell "2026-07-23 15:30" [ref=e400]
+            - cell [ref=e401]:
+              - button "编辑" [ref=e403] [cursor=pointer]
+          - row [ref=e404]:
+            - cell [ref=e405]
+            - cell "广州白云储能调频站" [ref=e407]
+            - cell "比亚迪储能有限公司" [ref=e408]
+            - cell "三峡能源股份有限公司" [ref=e409]
+            - cell "GD-GZ-2024-0289" [ref=e410]
+            - cell "广东省 / 广州市 / 白云区" [ref=e411]
+            - cell [ref=e412]
+            - cell "8,000" [ref=e415]
+            - cell "5,000" [ref=e416]
+            - cell "110kV" [ref=e417]
+            - cell "2026-07-22 10:12" [ref=e418]
+            - cell [ref=e419]:
+              - button "编辑" [ref=e421] [cursor=pointer]
+          - row [ref=e422]:
+            - cell [ref=e423]
+            - cell "无锡新吴区充电站群" [ref=e425]
+            - cell "国网无锡供电公司" [ref=e426]
+            - cell "国网江苏省电力有限公司" [ref=e427]
+            - cell "JS-WX-2024-0067" [ref=e428]
+            - cell "江苏省 / 无锡市 / 新吴区" [ref=e429]
+            - cell [ref=e430]
+            - cell "2,400" [ref=e433]
+            - cell "1,600" [ref=e434]
+            - cell "10kV" [ref=e435]
+            - cell "2026-07-21 13:45" [ref=e436]
+            - cell [ref=e437]:
+              - button "编辑" [ref=e439] [cursor=pointer]
+          - row [ref=e440]:
+            - cell [ref=e441]
+            - cell "温州鹿城工业园区负荷" [ref=e443]
+            - cell "国网温州供电公司" [ref=e444]
+            - cell "明阳智慧能源集团股份有限公司" [ref=e445]
+            - cell "ZJ-WZ-2024-0193" [ref=e446]
+            - cell "浙江省 / 温州市 / 鹿城区" [ref=e447]
+            - cell [ref=e448]
+            - cell "6,000" [ref=e451]
+            - cell "1,800" [ref=e452]
+            - cell "35kV" [ref=e453]
+            - cell "2026-07-20 17:22" [ref=e454]
+            - cell [ref=e455]:
+              - button "编辑" [ref=e457] [cursor=pointer]
+          - row [ref=e458]:
+            - cell [ref=e459]
+            - cell "上海黄浦商业楼宇负荷" [ref=e461]
+            - cell "国网上海市区供电公司" [ref=e462]
+            - cell "国网江苏省电力有限公司" [ref=e463]
+            - cell "SH-HP-2024-0045" [ref=e464]
+            - cell "上海市 / 黄浦区" [ref=e465]
+            - cell [ref=e466]
+            - cell "3,500" [ref=e469]
+            - cell "1,000" [ref=e470]
+            - cell "10kV" [ref=e471]
+            - cell "2026-07-19 09:50" [ref=e472]
+            - cell [ref=e473]:
+              - button "编辑" [ref=e475] [cursor=pointer]
+      - generic [ref=e278]:
+        - generic [ref=e279]: 共 12 条记录
+        - generic [ref=e280]:
+          - generic [ref=e281]: 每页
+          - generic [ref=e282] [cursor=pointer]:
+            - generic [ref=e283]: 10条
+            - generic [ref=e284]: 
+        - generic [ref=e285]:
+          - button "" [ref=e476]
+          - button "1" [ref=e478] [cursor=pointer]
+          - button "2" [ref=e479] [cursor=pointer]
+          - button "" [ref=e480] [cursor=pointer]
+        - generic [ref=e292]:
+          - generic [ref=e293]: 跳至
+          - textbox [ref=e294]: "1"
+          - generic [ref=e295]: 页
+  - generic:
+    - generic:
+      - generic: 新增资源
+      - button ""
+    - generic:
+      - generic:
+        - generic:
+          - generic: 资源名称*
+          - textbox "请输入资源站点名称"
+        - generic:
+          - generic: 户号*
+          - textbox "请输入用户编号"
+      - generic:
+        - generic:
+          - generic: 所属运营商
+          - textbox "请输入运营主体"
+        - generic:
+          - generic: 所属用户
+          - textbox "请输入归属单位"
+      - generic:
+        - generic:
+          - generic: 资源类型*
+          - textbox "如：充电桩、储能、光伏、负荷"
+        - generic:
+          - generic: 电压等级
+          - textbox "如：10kV、35kV"
+      - generic:
+        - generic:
+          - generic: 资源容量 (kW)
+          - textbox "请输入额定容量"
+        - generic:
+          - generic: 可调容量 (kW)
+          - textbox "请输入可调节容量"
+      - generic:
+        - generic:
+          - generic: 区域
+          - textbox "请输入资源位置"
+      - generic:
+        - generic:
+          - generic: 备注
+          - textbox "请输入备注信息（可选）"
+    - generic:
+      - generic: 带 * 为必填项
+      - button "取消"
+      - button "保存"
+  - generic:
+    - generic:
+      - generic: 删除资源
+      - button ""
+    - generic:
+      - generic:
+        - text: 确定要删除
+        - strong: 该资源
+        - text: 吗？
+      - generic:
+        - generic: 
+        - text: 此操作不可撤销，删除后数据将无法恢复。
+    - generic:
+      - button "取消"
+      - button "确认删除"
+  - generic:
+    - generic: 
+    - generic: 查询完成

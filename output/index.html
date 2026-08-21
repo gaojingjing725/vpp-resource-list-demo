@@ -4,15 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>资源池管理 - 虚拟电厂智慧运营平台</title>
-<script>
-try {
-  document.documentElement.dataset.theme = localStorage.getItem('vpp-theme') || 'dark';
-  document.documentElement.dataset.navLayout = localStorage.getItem('vpp-nav-layout') || 'top';
-} catch (e) {
-  document.documentElement.dataset.theme = 'dark';
-  document.documentElement.dataset.navLayout = 'top';
-}
-</script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <style>
 /* ==============================
@@ -39,7 +30,11 @@ try {
   --fixed-bg-default: #0D2137;
   --fixed-bg-hover: #0E2845;
   --fixed-bg-selected: #0F2C4E;
-  --fixed-bg-header: #132D4A;
+  --fixed-bg-header: #0F2640;
+
+  /* 固定列阴影边界（表格规范 §12.4） */
+  --fixed-shadow-right: 6px 0 12px -2px rgba(255,255,255,0.12);
+  --fixed-shadow-left: -6px 0 12px -2px rgba(255,255,255,0.12);
 
   /* 边框 */
   --border-subtle: rgba(255,255,255,0.06);
@@ -99,7 +94,6 @@ try {
   --breadcrumb-h: 40px;
   --content-px: 24px;
   --content-py: 24px;
-  --nav-sidebar-w: 220px;
 
   /* Z-index */
   --z-content: 0;
@@ -114,36 +108,6 @@ try {
   --z-modal: 1300;
   --z-modal-mask: 1299;
   --z-toast: 1400;
-}
-
-:root[data-theme="light"] {
-  --page-bg: #F3F7FC;
-  --card-bg: #FFFFFF;
-  --card-bg-alt: #F7FAFE;
-
-  --fixed-bg-default: #FFFFFF;
-  --fixed-bg-hover: #F3F8FF;
-  --fixed-bg-selected: #EAF3FF;
-  --fixed-bg-header: #E5EDF7;
-  --border-subtle: rgba(23,43,67,0.08);
-  --border-divider: rgba(23,43,67,0.12);
-  --border-default: rgba(23,43,67,0.16);
-  --border-hover: rgba(23,43,67,0.24);
-  --border-active: rgba(22,104,220,0.38);
-
-  --text-primary: #172B43;
-  --text-secondary: #4F647A;
-  --text-muted: #75879A;
-  --text-disabled: #A8B4C0;
-  --text-label: #60758B;
-}
-
-:root[data-theme="light"] .header-submenu,
-:root[data-theme="light"] .dropdown-panel,
-:root[data-theme="light"] .cascader-panel {
-  background: #FFFFFF;
-  border-color: var(--border-default);
-  box-shadow: 0 8px 24px rgba(23,43,67,0.14);
 }
 
 /* ==============================
@@ -166,21 +130,6 @@ html, body {
   overflow: hidden;
 }
 
-body,
-.header,
-.breadcrumb,
-.content,
-.header-nav,
-.filter-section,
-.table-container,
-.modal,
-.dropdown-panel,
-.cascader-panel,
-thead th,
-tbody td {
-  transition: background-color 200ms ease, color 200ms ease, border-color 200ms ease;
-}
-
 /* 滚动条 */
 ::-webkit-scrollbar {
   width: 6px;
@@ -195,14 +144,6 @@ tbody td {
 }
 ::-webkit-scrollbar-thumb:hover {
   background: rgba(255,255,255,0.15);
-}
-
-:root[data-theme="light"] ::-webkit-scrollbar-thumb {
-  background: rgba(23,43,67,0.16);
-}
-
-:root[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
-  background: rgba(23,43,67,0.24);
 }
 
 /* ==============================
@@ -231,15 +172,15 @@ tbody td {
 .header-logo {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: 10px;
   padding-right: var(--space-6);
   margin-right: var(--space-2);
   border-right: 1px solid var(--border-subtle);
 }
 
 .header-logo-icon {
-  width: 32px;
-  height: 32px;
+  width: 36px;
+  height: 36px;
   border-radius: 10px;
   background: linear-gradient(145deg, #061D35 0%, #0B2B4F 35%, #114480 100%);
   border: 1px solid rgba(23, 118, 229, 0.3);
@@ -255,16 +196,16 @@ tbody td {
 }
 
 .header-logo-icon svg {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
 }
 
 .header-logo-title {
   font-family: 'Alimama ShuHeiTi', var(--font-sans);
-  font-size: 17px;
+  font-size: 18px;
   font-weight: 700;
   color: var(--text-primary);
-  letter-spacing: 1px;
+  letter-spacing: 2px;
 }
 
 .header-nav {
@@ -278,7 +219,7 @@ tbody td {
   position: relative;
   display: flex;
   align-items: center;
-  padding: 6px 14px;
+  padding: 0 16px;
   font-size: 13px;
   font-weight: 500;
   color: var(--text-muted);
@@ -289,9 +230,6 @@ tbody td {
   border-radius: var(--radius-sm) var(--radius-sm) 0 0;
   user-select: none;
   white-space: nowrap;
-  font-family: var(--font-sans);
-  line-height: 1.4;
-  letter-spacing: 0;
 }
 
 /* 底部霓虹指示条 */
@@ -349,34 +287,16 @@ tbody td {
   margin-bottom: -3px;
   color: #E8F4FF;
   background: linear-gradient(180deg, 
-    rgba(23,118,229,0.03) 0%,
-    rgba(23,118,229,0.08) 25%,
-    rgba(23,118,229,0.16) 60%,
-    rgba(23,118,229,0.28) 100%);
+    rgba(23,118,229,0.04) 0%, 
+    rgba(23,118,229,0.10) 25%, 
+    rgba(23,118,229,0.22) 60%,
+    rgba(23,118,229,0.38) 100%);
   border-bottom-color: transparent;
   font-weight: 600;
   box-shadow: 
-    0 4px 24px -10px rgba(23,118,229,0.32),
-    inset 0 1px 0 rgba(72,151,243,0.14);
-  text-shadow: 0 0 14px rgba(72,151,243,0.14);
-}
-
-:root[data-theme="light"] .header-nav-item.active {
-  color: var(--text-primary);
-  background: linear-gradient(180deg,
-    rgba(23,118,229,0.01) 0%,
-    rgba(23,118,229,0.03) 25%,
-    rgba(23,118,229,0.07) 60%,
-    rgba(23,118,229,0.12) 100%);
-  box-shadow:
-    0 4px 20px -12px rgba(23,118,229,0.16),
-    inset 0 1px 0 rgba(72,151,243,0.08);
-  text-shadow: none;
-}
-
-:root[data-theme="light"] .header-nav-item.active::after {
-  opacity: 0.72;
-  box-shadow: 0 0 8px rgba(23,118,229,0.24);
+    0 4px 24px -10px rgba(23,118,229,0.45),
+    inset 0 1px 0 rgba(72,151,243,0.18);
+  text-shadow: 0 0 14px rgba(72,151,243,0.2);
 }
 
 .header-nav-item.active::before {
@@ -396,224 +316,11 @@ tbody td {
     0 1px 0 rgba(23,118,229,0.4);
 }
 
-/* ==============================
-   二级菜单下拉面板
-   ============================== */
-.header-nav-dropdown {
-  position: relative;
-}
-
-.header-submenu {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  min-width: 160px;
-  background: linear-gradient(180deg, #0F1D32 0%, #0C182B 100%);
-  border: 1px solid rgba(23,118,229,0.25);
-  border-top: none;
-  border-radius: 0 0 var(--radius-md) var(--radius-md);
-  box-shadow: 
-    0 8px 32px rgba(0,0,0,0.5),
-    0 0 20px -4px rgba(23,118,229,0.15);
-  padding: var(--space-2) 0;
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(-4px);
-  transition: all 200ms cubic-bezier(0.4, 0, 0.2, 1);
-  z-index: calc(var(--z-header) + 1);
-  pointer-events: none;
-}
-
-.header-nav-dropdown:hover .header-submenu,
-.header-nav-dropdown:focus-within .header-submenu,
-.header-nav-dropdown.open .header-submenu {
-  opacity: 1;
-  visibility: visible;
-  transform: translateY(0);
-  pointer-events: auto;
-}
-
-.header-submenu-item {
-  display: flex;
-  align-items: center;
-  min-height: 38px;
-  margin: 2px 6px;
-  padding: 0 16px 0 28px;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 150ms ease;
-  white-space: nowrap;
-  position: relative;
-  font-family: var(--font-sans);
-  line-height: 1.4;
-  letter-spacing: 0;
-}
-
-.header-submenu-item::after {
-  content: '';
-  position: absolute;
-  left: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 3px;
-  height: 12px;
-  border-radius: 3px;
-  background: var(--primary-400);
-  opacity: 0;
-  transform: translateY(-50%) scaleY(.5);
-  transition: opacity 160ms ease, transform 160ms ease;
-}
-
-.header-submenu-item:hover {
-  color: #D7E9FF;
-  background: linear-gradient(90deg, rgba(23,118,229,.13), rgba(23,118,229,.05));
-}
-
-.header-submenu-item:hover::after {
-  opacity: 0;
-  transform: translateY(-50%) scaleY(.5);
-}
-
-.header-submenu-item.active {
-  color: #FFFFFF;
-  background: linear-gradient(90deg, rgba(23,118,229,.28), rgba(23,118,229,.12));
-  font-weight: 600;
-  box-shadow: inset 0 0 0 1px rgba(91,160,245,.10);
-}
-
-.header-submenu-item.active::after {
-  opacity: 1;
-  transform: translateY(-50%) scaleY(1);
-}
-
-:root[data-theme="light"] .header-submenu-item:hover {
-  color: #165EA8;
-  background: linear-gradient(90deg, rgba(23,118,229,.09), rgba(23,118,229,.035));
-}
-
-:root[data-theme="light"] .header-submenu-item.active {
-  color: #174F8F;
-  background: linear-gradient(90deg, rgba(23,118,229,.15), rgba(23,118,229,.07));
-  box-shadow: inset 0 0 0 1px rgba(23,118,229,.06);
-}
-
 .header-right {
   margin-left: auto;
   display: flex;
   align-items: center;
-  gap: var(--space-3);
-}
-
-.nav-layout-toggle,
-.theme-toggle {
-  width: 32px;
-  height: 32px;
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--text-secondary);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 150ms ease;
-}
-
-.nav-layout-toggle:hover,
-.theme-toggle:hover {
-  color: var(--primary-400);
-  border-color: var(--border-hover);
-  background: rgba(23,118,229,0.08);
-}
-
-.nav-layout-toggle:focus-visible,
-.theme-toggle:focus-visible {
-  outline: 2px solid var(--border-active);
-  outline-offset: 2px;
-}
-
-.nav-layout-toggle i,
-.theme-toggle i {
-  font-size: 14px;
-}
-
-/* 左侧菜单布局 */
-:root[data-nav-layout="side"] .header-nav {
-  position: fixed;
-  top: var(--header-h);
-  bottom: 0;
-  left: 0;
-  width: var(--nav-sidebar-w);
-  height: auto;
-  padding: var(--space-4) var(--space-3);
-  flex-direction: column;
-  align-items: stretch;
-  gap: var(--space-1);
-  background: var(--card-bg);
-  border-right: 1px solid var(--border-divider);
-  z-index: var(--z-sidebar);
-}
-
-:root[data-nav-layout="side"] .header-nav-item {
-  min-height: 40px;
-  padding: 0 var(--space-3);
-  margin: 0;
-  border: 0;
-  border-radius: var(--radius-sm);
-  flex-shrink: 0;
-}
-
-:root[data-nav-layout="side"] .header-nav-item.active {
-  margin: 0;
-}
-
-:root[data-nav-layout="side"] .header-nav-item::before {
-  display: none;
-}
-
-:root[data-nav-layout="side"] .header-nav-item::after {
-  top: 50%;
-  bottom: auto;
-  left: 0;
-  width: 2px;
-  height: 56%;
-  transform: translateY(-50%);
-  background: var(--primary-400);
-}
-
-:root[data-nav-layout="side"] .header-nav-item:hover::after {
-  width: 2px;
-}
-
-:root[data-nav-layout="side"] .header-nav-item.active::after {
-  width: 2px;
-  height: 64%;
-}
-
-:root[data-nav-layout="side"] .header-submenu {
-  top: 0;
-  left: calc(100% + var(--space-1));
-  border: 1px solid var(--border-default);
-  border-radius: var(--radius-md);
-  transform: translateX(-4px);
-}
-
-:root[data-nav-layout="side"] .header-nav-dropdown:hover .header-submenu,
-:root[data-nav-layout="side"] .header-nav-dropdown:focus-within .header-submenu,
-:root[data-nav-layout="side"] .header-nav-dropdown.open .header-submenu {
-  transform: translateX(0);
-}
-
-:root[data-nav-layout="side"] .content {
-  left: var(--nav-sidebar-w);
-  top: var(--header-h);
-}
-
-:root[data-nav-layout="side"] .header-logo {
-  border-right: none;
+  gap: var(--space-2);
 }
 
 .header-avatar {
@@ -665,23 +372,24 @@ tbody td {
    面包屑 — 40px
    ============================== */
 .breadcrumb {
-  position: static;
-  flex: 0 0 auto;
+  position: fixed;
+  top: var(--header-h);
+  left: 0;
+  right: 0;
   height: var(--breadcrumb-h);
-  min-height: var(--breadcrumb-h);
-  background: transparent;
+  background: var(--page-bg);
   border-bottom: 1px solid var(--border-subtle);
   display: flex;
   align-items: center;
-  padding: 0;
-  margin: calc(var(--content-py) * -1) 0 var(--space-4);
+  padding: 0 var(--content-px);
+  z-index: var(--z-content);
 }
 
 .breadcrumb-list {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .breadcrumb-item {
@@ -705,7 +413,7 @@ tbody td {
 
 .breadcrumb-separator {
   color: var(--text-disabled);
-  font-size: 12px;
+  font-size: 9px;
 }
 
 /* ==============================
@@ -713,7 +421,7 @@ tbody td {
    ============================== */
 .content {
   position: fixed;
-  top: var(--header-h);
+  top: calc(var(--header-h) + var(--breadcrumb-h));
   left: 0;
   right: 0;
   bottom: 0;
@@ -728,45 +436,15 @@ tbody td {
   background: var(--card-bg);
   border-radius: var(--radius-lg);
   border: 1px solid var(--border-subtle);
-  padding: var(--space-2) var(--space-4);
-  margin: 0 0 var(--space-4);
-}
-
-.filter-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  min-height: 24px;
-  margin-bottom: var(--space-2);
-}
-
-.filter-title {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-.filter-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  align-items: flex-end;
-  gap: var(--space-4);
-}
-
-.filter-section.is-collapsed .filter-header {
-  margin-bottom: 0;
-}
-
-.filter-section.is-collapsed .filter-row {
-  display: none;
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
 }
 
 .filter-grid {
-  display: contents;
-}
-
-.filter-section.is-collapsed .filter-grid {
-  display: none;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+  align-items: start;
 }
 
 .filter-item {
@@ -778,7 +456,7 @@ tbody td {
   font-size: 13px;
   font-weight: 400;
   color: var(--text-secondary);
-  margin-bottom: var(--space-1);
+  margin-bottom: 6px;
   white-space: nowrap;
 }
 
@@ -825,13 +503,23 @@ tbody td {
   width: 100%;
 }
 
+.filter-search i {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
 .filter-search input {
   width: 100%;
   height: 38px;
   background: transparent;
   border: 1px solid var(--border-default);
   border-radius: var(--radius-sm);
-  padding: 0 var(--space-4);
+  padding: 0 var(--space-4) 0 40px;
   font-size: 14px;
   font-weight: 400;
   font-family: var(--font-sans);
@@ -892,49 +580,9 @@ tbody td {
 
 .filter-actions {
   display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: var(--space-1);
-}
-
-@media (min-width: 768px) {
-  .filter-row { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-}
-
-@media (min-width: 1200px) {
-  .filter-row { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-}
-
-.filter-actions .filter-query,
-.filter-actions .filter-reset {
-  width: 64px;
-}
-
-.filter-actions .filter-query {
-  gap: var(--space-1);
-}
-
-.filter-actions .filter-reset {
-  gap: var(--space-1);
-}
-
-.filter-toggle {
-  margin-left: auto;
-  font-size: 12px;
-  gap: var(--space-1);
-}
-
-.filter-toggle i {
-  font-size: 9px;
-  transition: transform 200ms ease;
-}
-
-.filter-toggle span {
-  font-size: 12px;
-}
-
-.filter-section.is-collapsed .filter-toggle i {
-  transform: rotate(180deg);
+  justify-content: flex-end;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
 }
 
 /* ==============================
@@ -1023,25 +671,6 @@ tbody td {
   background: rgba(255,87,87,0.15);
 }
 
-/* Danger 危险按钮 — 引用按钮规范 §1.4 */
-.btn-danger {
-  background: var(--red-700);
-  color: #FFFFFF;
-  padding: 0 var(--space-4);
-  height: 38px;
-  border: 1px solid var(--red-700);
-}
-
-.btn-danger:hover {
-  background: #D04040;
-  border-color: #D04040;
-}
-
-.btn-danger:active {
-  background: #A83030;
-  border-color: #A83030;
-}
-
 /* Small 尺寸 */
 .btn-sm {
   height: 30px;
@@ -1056,7 +685,7 @@ tbody td {
   display: flex;
   align-items: center;
   gap: var(--space-2);
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--space-1);
 }
 
 .action-divider {
@@ -1098,24 +727,6 @@ thead th {
   position: sticky;
   top: 0;
   z-index: var(--z-table-header);
-}
-
-th.sortable {
-  cursor: pointer;
-  user-select: none;
-}
-th.sortable:hover {
-  color: var(--primary-400);
-}
-th.sortable .sort-icon {
-  margin-left: 4px;
-  font-size: 12px;
-  color: var(--text-disabled);
-  transition: color 150ms ease;
-}
-th.sortable.asc .sort-icon,
-th.sortable.desc .sort-icon {
-  color: var(--primary-400);
 }
 
 tbody td {
@@ -1220,6 +831,57 @@ tbody tr.selected:hover td.col-fixed-right {
 thead th.col-fixed-left,
 thead th.col-fixed-right {
   background: var(--fixed-bg-header);
+}
+
+/* 阴影边界 — 最后一列左固定列的右侧（表格规范 §12.4）
+   使用 ::after 伪元素，避免 box-shadow 被相邻单元格背景覆盖 */
+th.col-last-left-fixed::after,
+td.col-last-left-fixed::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: -8px;
+  bottom: 0;
+  width: 8px;
+  background: linear-gradient(to right, rgba(255,255,255,0.12), transparent);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+/* 第一列右固定列的左侧 */
+th.col-first-right-fixed::after,
+td.col-first-right-fixed::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -8px;
+  bottom: 0;
+  width: 8px;
+  background: linear-gradient(to left, rgba(255,255,255,0.12), transparent);
+  pointer-events: none;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+/* 滚动时显示阴影 */
+.table-scroll.is-scrolling th.col-last-left-fixed::after,
+.table-scroll.is-scrolling td.col-last-left-fixed::after,
+.table-scroll.is-scrolling th.col-first-right-fixed::after,
+.table-scroll.is-scrolling td.col-first-right-fixed::after {
+  opacity: 1;
+}
+
+/* 滚动到边缘时隐藏阴影（表格规范 §12.5） */
+.table-scroll.no-left-shadow th.col-last-left-fixed::after,
+.table-scroll.no-left-shadow td.col-last-left-fixed::after {
+  display: none;
+}
+.table-scroll.no-right-shadow th.col-first-right-fixed::after,
+.table-scroll.no-right-shadow td.col-first-right-fixed::after {
+  display: none;
 }
 
 /* Checkbox — 引用表单规范 §4.1 */
@@ -1340,22 +1002,10 @@ thead th.col-fixed-right {
 .pagination {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   gap: var(--space-4);
   padding: 12px 16px;
   border-top: 1px solid var(--border-divider);
-}
-
-.pagination-left {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
-}
-
-.pagination-right {
-  display: flex;
-  align-items: center;
-  gap: var(--space-4);
 }
 
 .pagination-total {
@@ -1555,342 +1205,114 @@ thead th.col-fixed-right {
 }
 
 /* 级联选择面板 */
-/* ==============================
-   级联面板 — 遵循 VPP 颜色 / 表单 / 圆角规范
-   参考: color-spec §5 提升表面, form-spec §3 下拉框面板, form-spec §4.1 复选框
-   ============================== */
 .cascader-panel {
   position: absolute;
   top: calc(100% + 4px);
   left: 0;
-  background: var(--card-bg-alt);                /* #0F2640 — 提升表面 */
-  border: 1px solid rgba(22,104,220,0.20);        /* form-spec §3.1 强调边框 */
-  border-radius: var(--radius-md);                /* 8px */
-  box-shadow: 0 8px 24px rgba(0,0,0,0.40);        /* form-spec §3.1 */
+  background: var(--card-bg-alt);
+  border: 1px solid rgba(22,104,220,0.20);
+  border-radius: var(--radius-md);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.40);
   z-index: var(--z-dropdown);
   display: none;
+  overflow: hidden;
 }
 
 .cascader-panel.show {
   display: flex;
-  flex-direction: column;   /* 列行在上，footer 在下 */
-  flex-wrap: nowrap;
 }
 
-/* 列行容器：所有级联列始终在同一行向右展开 */
-.cascader-body {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  flex-shrink: 0;
-  overflow: hidden;
-}
-
-/* ---- 列 ---- */
 .cascader-column {
-  box-sizing: border-box;
-  width: 180px;
-  max-height: 204px;
+  width: 160px;
+  max-height: 260px;
   overflow-y: auto;
   border-right: 1px solid var(--border-subtle);
-  flex-shrink: 0;
+  padding: var(--space-1);
 }
 
 .cascader-column:last-child {
   border-right: none;
 }
 
-/* 滚动条 */
-.cascader-column::-webkit-scrollbar {
-  width: 6px;
-}
-.cascader-column::-webkit-scrollbar-thumb {
-  background: rgba(255,255,255,0.10);
-  border-radius: 3px;
-}
-.cascader-column::-webkit-scrollbar-thumb:hover {
-  background: rgba(255,255,255,0.15);
-}
-.cascader-column::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-/* ---- 选项行 ---- */
 .cascader-option {
-  min-height: 34px;
-  padding: 6px 12px;
-  font-size: 14px;
-  font-weight: 400;
-  color: var(--text-secondary);                   /* #A3B8D0 — form-spec §3.2 默认 */
+  padding: 8px 12px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
   cursor: pointer;
   transition: all 150ms ease;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  white-space: nowrap;
-  position: relative;
-  border-radius: var(--radius-sm);                /* 6px — form-spec §3.2 */
-  margin: 1px 4px;
-}
-
-.cascader-option:hover {
-  background: rgba(23,118,229,0.08);              /* form-spec §3.2 Hover */
-  color: var(--text-primary);                     /* #E8F0FC */
-}
-
-.cascader-option.is-active {
-  color: var(--text-primary);                     /* #E8F0FC */
-  background: rgba(23,118,229,0.08);
-}
-
-.cascader-option.is-checked {
-  color: var(--primary-400);                      /* #4897F3 — form-spec §3.2 选中 */
-  font-weight: 500;
-}
-
-.cascader-option.is-checked.is-active {
-  color: var(--primary-300);                      /* #7FB3EF */
-}
-
-.cascader-option .el-cascader-node__label {
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.cascader-option .el-cascader-node__arrow {
-  font-size: 12px;
-  color: var(--text-muted);                       /* #6B8AAB */
-  transition: transform 0.15s ease;
-  flex-shrink: 0;
-}
-
-.cascader-option:hover .el-cascader-node__arrow {
-  color: var(--text-secondary);                   /* #A3B8D0 */
-}
-
-/* ---- 全选行 ---- */
-.cascader-option--all {
-  border-bottom: 1px solid var(--border-subtle);   /* rgba(255,255,255,0.06) */
-  font-weight: 500;
-  color: var(--text-secondary);                    /* #A3B8D0 */
-  border-radius: 0;
-  margin: 0 4px 1px 4px;
-}
-
-.cascader-option--all:hover {
-  background: rgba(23,118,229,0.08);
-}
-
-/* ---- 复选框 — 遵循 form-spec §4.1 ---- */
-.cascader-checkbox {
-  width: 16px;
-  height: 16px;
-  border-radius: 4px;
-  border: 1.5px solid var(--border-hover);        /* 随深浅主题切换的默认边框 */
-  background: transparent;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: all 0.15s ease;
-  cursor: pointer;
-  box-sizing: border-box;
-  position: relative;
-}
-
-.cascader-option:hover .cascader-checkbox:not(.checked):not(.partial) {
-  border-color: var(--primary-400);               /* #4897F3 — form-spec §4.1 Hover */
-}
-
-.cascader-checkbox.checked {
-  background: var(--primary-500);                 /* #1776E5 — form-spec §4.1 选中 */
-  border-color: var(--primary-500);
-}
-
-.cascader-checkbox.checked::after {
-  content: '';
-  position: absolute;
-  width: 5px;
-  height: 9px;
-  border: solid #FFFFFF;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
-  margin-bottom: 1px;
-  box-sizing: border-box;
-}
-
-.cascader-checkbox.partial {
-  background: var(--primary-500);                 /* #1776E5 */
-  border-color: var(--primary-500);
-}
-
-.cascader-checkbox.partial::after {
-  content: '';
-  position: absolute;
-  width: 8px;
-  height: 2px;
-  background: #FFFFFF;
-  border-radius: 1px;
-}
-
-/* ---- 底部操作栏 ---- */
-.cascader-footer-bar {
-  align-self: stretch;          /* flex column 交叉轴自动撑满，替代 width:100% 避免百分比计算异常 */
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 10px;
-  border-top: 1px solid var(--border-subtle);      /* rgba(255,255,255,0.06) */
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.cascader-footer-bar-count {
-  font-size: 12px;
-  color: var(--text-muted);                        /* #6B8AAB */
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.cascader-footer-bar-btn {
-  font-size: 12px;
-  height: 28px;
-  padding: 0 10px;
-  border-radius: var(--radius-sm);                 /* 6px */
-  border: 1px solid var(--border-secondary);       /* rgba(22,104,220,0.45) — 次按钮 */
-  background: transparent;
-  color: var(--text-secondary);                    /* #A3B8D0 */
-  cursor: pointer;
-  transition: all 150ms ease;
-  white-space: nowrap;
-  line-height: 26px;
-  font-family: var(--font-sans);
-}
-
-.cascader-footer-bar-btn:hover {
-  color: var(--primary-400);                       /* #4897F3 */
-  border-color: var(--border-secondary-hover);     /* rgba(22,104,220,0.55) */
-}
-
-.cascader-footer-bar-btn--confirm {
-  background: var(--primary-500);                  /* #1776E5 */
-  color: #FFFFFF;
-  border-color: var(--primary-500);
-}
-
-.cascader-footer-bar-btn--confirm:hover {
-  background: var(--primary-400);                  /* #4897F3 */
-  border-color: var(--primary-400);
-  color: #FFFFFF;
-}
-
-/* 多选 trigger */
-.filter-input--multi {
-  cursor: pointer;
-  min-height: 38px;
-  height: auto;
-  padding: 4px 6px 4px 10px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.filter-input-tags {
-  flex: 1;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 4px;
-  align-items: center;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.filter-input-placeholder {
-  font-size: 14px;
-  color: var(--text-muted);
   white-space: nowrap;
 }
 
-.filter-input-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 2px 8px;
-  font-size: 12px;
-  color: #D0E4FF;
-  background: rgba(23,118,229,0.18);
-  border: 1px solid rgba(23,118,229,0.25);
-  border-radius: var(--radius-full);
-  white-space: nowrap;
-  max-width: 140px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.cascader-option:hover {
+  background: rgba(23,118,229,0.08);
+  color: var(--text-primary);
 }
 
-.filter-input-tag-close {
-  cursor: pointer;
-  font-size: 10px;
-  color: rgba(127,179,239,0.7);
-  transition: color 150ms ease;
-  line-height: 1;
-}
-
-.filter-input-tag-close:hover {
-  color: #fff;
-}
-
-.filter-input-tag-more {
-  font-size: 12px;
+.cascader-option.selected {
+  background: rgba(23,118,229,0.12);
   color: var(--primary-400);
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.filter-input-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
-}
-
-.filter-input-count {
-  font-size: 12px;
   font-weight: 500;
-  color: var(--primary-400);
-  white-space: nowrap;
 }
 
+.cascader-option i {
+  font-size: 9px;
+  color: var(--text-muted);
+}
 
-/* 批量选中内联提示 */
+.cascader-option.selected i {
+  color: var(--primary-400);
+}
+
+/* 选中计数提示 */
+.batch-info-bar {
+  display: none;
+  align-items: center;
+  gap: var(--space-3);
+  padding: 10px 16px;
+  background: rgba(23,118,229,0.08);
+  border: 1px solid rgba(23,118,229,0.15);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-2);
+}
+
+.batch-info-bar.show {
+  display: flex;
+}
+
 .batch-count {
   font-size: 13px;
   font-weight: 500;
   color: var(--primary-300);
-  white-space: nowrap;
+}
+
+.batch-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(23,118,229,0.20);
 }
 
 .batch-clear {
-  font-size: 13px;
+  font-size: 14px;
   color: var(--primary-400);
   cursor: pointer;
   background: transparent;
   border: none;
-  padding: 0;
   transition: color 150ms ease;
-  white-space: nowrap;
 }
 
 .batch-clear:hover {
-  color: var(--primary-200);
+  color: var(--primary-300);
 }
 
 /* Toast 通知 */
 .toast {
   position: fixed;
-  top: 24px;
-  left: 50%;
-  transform: translateX(-50%) translateY(-8px);
+  top: 80px;
+  right: 24px;
   display: flex;
   align-items: center;
   gap: var(--space-2);
@@ -1903,13 +1325,14 @@ thead th.col-fixed-right {
   font-size: 14px;
   color: var(--text-primary);
   opacity: 0;
+  transform: translateY(-8px);
   transition: all 250ms cubic-bezier(0.16,1,0.3,1);
   pointer-events: none;
 }
 
 .toast.show {
   opacity: 1;
-  transform: translateX(-50%) translateY(0);
+  transform: translateY(0);
 }
 
 .toast.success i { color: var(--green-500); }
@@ -1920,7 +1343,7 @@ thead th.col-fixed-right {
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.60);
+  background: rgba(0,0,0,0.80);
   z-index: var(--z-modal-mask);
   opacity: 0;
   transition: opacity 200ms ease;
@@ -1937,7 +1360,7 @@ thead th.col-fixed-right {
   position: fixed;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, calc(-50% + 8px)) scale(0.95);
+  transform: translate(-50%, -50%) scale(0.95);
   width: 640px;
   max-height: 90%;
   background: var(--card-bg);
@@ -2109,23 +1532,13 @@ thead th.col-fixed-right {
   .modal, .overlay, .toast {
     animation: none !important;
     transition: opacity 150ms ease !important;
+    transform: none !important;
   }
   .modal.show {
     transform: translate(-50%, -50%) !important;
   }
-  .toast {
-    transform: translateX(-50%) !important;
-  }
-  .toast.show {
-    transform: translateX(-50%) !important;
-    opacity: 1;
-  }
 }
 </style>
-<link rel="stylesheet" href="shared-navigation.css?v=20260821-1">
-<link rel="stylesheet" href="shared-list-components.css?v=20260821-6">
-<link rel="stylesheet" href="shared-primary-menu-active.css">
-<link rel="stylesheet" href="shared-theme.css">
 </head>
 <body>
 
@@ -2165,43 +1578,17 @@ thead th.col-fixed-right {
       <span class="header-logo-title">虚拟电厂智慧运营平台</span>
     </div>
     <nav class="header-nav">
-      <div class="header-nav-item" role="link" tabindex="0" onclick="window.location.href='index.html'" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='index.html'}">首页</div>
+      <div class="header-nav-item">首页</div>
       <div class="header-nav-item">基础管理</div>
-      <div class="header-nav-item active header-nav-dropdown" tabindex="0" aria-expanded="false">资源池管理
-        <div class="header-submenu">
-          <div class="header-submenu-item active" role="link" tabindex="0" onclick="event.stopPropagation();window.location.href='resource-list.html'">资源管理</div>
-          <div class="header-submenu-item">聚合管理</div>
-          <div class="header-submenu-item" onclick="location.href='resource-analysis.html'">资源分析</div>
-        </div>
-      </div>
+      <div class="header-nav-item active">资源池管理</div>
       <div class="header-nav-item">运行监测</div>
-      <div class="header-nav-item header-nav-dropdown" tabindex="0" aria-expanded="false">协调控制
-        <div class="header-submenu">
-          <div class="header-submenu-item">负荷预测</div>
-          <div class="header-submenu-item">方案管理</div>
-          <div class="header-submenu-item" role="link" tabindex="0" onclick="event.stopPropagation();window.location.href='optimization-decomposition.html'" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();window.location.href='optimization-decomposition.html'}">优化分解</div>
-          <div class="header-submenu-item">分解下发审核</div>
-          <div class="header-submenu-item">响应方案管理监视</div>
-        </div>
-      </div>
+      <div class="header-nav-item">协调控制</div>
       <div class="header-nav-item">物联采集</div>
-      <div class="header-nav-item header-nav-dropdown" tabindex="0" aria-expanded="false">系统管理
-        <div class="header-submenu">
-          <div class="header-submenu-item" role="link" tabindex="0" onclick="event.stopPropagation();window.location.href='user-management.html'">用户管理</div>
-          <div class="header-submenu-item">角色管理</div>
-          <div class="header-submenu-item">权限管理</div>
-        </div>
-      </div>
-      <div class="header-nav-item">需求响应</div><div class="header-nav-item" role="link" tabindex="0" onclick="location.href='filter-layout-examples.html'">更多</div>
+      <div class="header-nav-item">系统管理</div>
+      <div class="header-nav-item">需求响应</div>
     </nav>
   </div>
   <div class="header-right">
-    <button class="nav-layout-toggle" id="navLayoutToggle" type="button" onclick="toggleNavLayout()" aria-label="切换为左侧菜单" aria-pressed="false" title="切换为左侧菜单">
-      <i class="fa-solid fa-table-columns"></i>
-    </button>
-    <button class="theme-toggle" id="themeToggle" type="button" onclick="toggleTheme()" aria-label="切换为浅色主题" aria-pressed="false" title="切换为浅色主题">
-      <i class="fa-solid fa-sun"></i>
-    </button>
     <div class="header-avatar-wrapper" id="avatarBtn" onclick="toggleDropdown('avatar')">
       <div class="header-avatar">GJ</div>
       <i class="fa-solid fa-chevron-down header-avatar-arrow"></i>
@@ -2214,43 +1601,34 @@ thead th.col-fixed-right {
   </div>
 </header>
 
+<!-- ============================== 面包屑 ============================== -->
+<div class="breadcrumb">
+  <div class="breadcrumb-list">
+    <span class="breadcrumb-item"><i class="fa-solid fa-house" style="font-size:12px;"></i></span>
+    <span class="breadcrumb-separator"><i class="fa-solid fa-chevron-right"></i></span>
+    <span class="breadcrumb-item">资源池管理</span>
+    <span class="breadcrumb-separator"><i class="fa-solid fa-chevron-right"></i></span>
+    <span class="breadcrumb-item current">资源管理</span>
+  </div>
+</div>
+
 <!-- ============================== 内容区 ============================== -->
 <div class="content">
 
-  <!-- ============================== 面包屑 ============================== -->
-  <div class="breadcrumb">
-    <div class="breadcrumb-list">
-      <span class="breadcrumb-item"><i class="fa-solid fa-house" style="font-size:12px;"></i></span>
-      <span class="breadcrumb-separator"><i class="fa-solid fa-chevron-right"></i></span>
-      <span class="breadcrumb-item">资源池管理</span>
-      <span class="breadcrumb-separator"><i class="fa-solid fa-chevron-right"></i></span>
-      <span class="breadcrumb-item current">资源管理</span>
-    </div>
-  </div>
-
   <!-- 筛选区 -->
   <div class="filter-section">
-    <div class="filter-header">
-      <span class="filter-title">筛选条件</span>
-      <button class="filter-toggle" id="filterToggle" type="button" aria-expanded="true" aria-controls="filterRow" onclick="toggleFilterSection()">
-        <i class="fa-solid fa-chevron-up"></i>
-        <span>收起</span>
-      </button>
-    </div>
-    <div class="filter-row" id="filterRow">
-      <div class="filter-grid" id="filterGrid">
-      <!-- 区域：多选 -->
-      <div class="filter-item" style="min-width:0;">
+    <div class="filter-grid">
+      <!-- 区域：级联选择 -->
+      <div class="filter-item">
         <label class="filter-label">区域</label>
-        <div class="filter-control" style="width:100%;">
-          <div class="filter-input filter-input--multi" id="regionTrigger" onclick="event.stopPropagation(); toggleMultiCascader('region')">
-            <div class="filter-input-tags" id="regionTags"><span class="filter-input-placeholder">请选择省 / 市 / 区县</span></div>
-            <div class="filter-input-actions">
-              <span class="filter-input-count" id="regionCount" style="display:none;"></span>
+        <div class="filter-control">
+          <div class="filter-input" id="regionTrigger" onclick="toggleCascader('region')">
+            <div class="filter-input-text">
+              <span class="filter-input-value placeholder">请选择省 / 市 / 区县</span>
               <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
             </div>
           </div>
-          <div class="cascader-panel cascader-panel--region" id="regionPanel"></div>
+          <div class="cascader-panel" id="regionPanel"></div>
         </div>
       </div>
 
@@ -2286,29 +1664,42 @@ thead th.col-fixed-right {
       <div class="filter-item">
         <label class="filter-label">资源名称</label>
         <div class="filter-search">
+          <i class="fa-solid fa-magnifying-glass"></i>
           <input type="text" placeholder="请输入资源站点名称" id="searchInput">
         </div>
       </div>
-      </div>
-
-      <div class="filter-actions">
-        <button class="btn btn-primary btn-md filter-query" onclick="applyFilters()">
-          <i class="fa-solid fa-magnifying-glass"></i>
-          查询
-        </button>
-        <button class="btn btn-ghost btn-md filter-reset" onclick="resetFilters()">
-          <i class="fa-solid fa-rotate-left"></i>
-          重置
-        </button>
-      </div>
     </div>
+
+    <div class="filter-actions">
+      <button class="btn btn-ghost btn-sm" onclick="resetFilters()">
+        <i class="fa-solid fa-rotate-left"></i>
+        重置
+      </button>
+      <button class="btn btn-primary btn-sm" onclick="applyFilters()">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        查询
+      </button>
+    </div>
+  </div>
+
+  <!-- 批量操作栏（选中时显示） -->
+  <div class="batch-info-bar" id="batchBar">
+    <span class="batch-count" id="batchCount">已选择 0 项</span>
+    <div class="batch-divider"></div>
+    <button class="batch-clear" onclick="clearSelection()">取消选择</button>
+    <div class="batch-divider"></div>
+    <button class="btn btn-danger-outline btn-sm" onclick="confirmBatchDelete()">
+      <i class="fa-solid fa-trash-can"></i>
+      批量删除
+    </button>
+    <button class="btn btn-secondary btn-sm" onclick="exportSelected()">
+      <i class="fa-solid fa-download"></i>
+      导出选中
+    </button>
   </div>
 
   <!-- 操作按钮栏 -->
   <div class="action-bar">
-    <span class="batch-count" id="batchCount" style="display:none; margin-right: var(--space-1);">已选择 0 项</span>
-    <button class="batch-clear" id="batchClearBtn" onclick="clearSelection()" style="display:none;">取消选择</button>
-    <span class="action-divider" id="batchDivider" style="display:none;"></span>
     <button class="btn btn-primary btn-sm" onclick="openAddModal()">
       <i class="fa-solid fa-plus"></i>
       新增资源
@@ -2317,7 +1708,7 @@ thead th.col-fixed-right {
       <i class="fa-solid fa-trash-can"></i>
       批量删除
     </button>
-    <span class="action-divider" aria-hidden="true"></span>
+    <span class="action-divider"></span>
     <button class="btn btn-secondary btn-sm" onclick="exportAll()">
       <i class="fa-solid fa-download"></i>
       导出
@@ -2331,7 +1722,7 @@ thead th.col-fixed-right {
         <thead>
           <tr>
             <th class="col-fixed-left col-fixed-checkbox"><div class="checkbox" id="headerCheckbox" onclick="toggleSelectAll()"></div></th>
-            <th class="col-fixed-left col-fixed-name col-last-left-fixed sortable" data-sort="name" onclick="toggleSort('name', this)">资源名称<i class="fa-solid fa-sort sort-icon"></i></th>
+            <th class="col-fixed-left col-fixed-name col-last-left-fixed">资源名称</th>
             <th>所属运营商</th>
             <th>所属用户</th>
             <th>户号</th>
@@ -2340,7 +1731,7 @@ thead th.col-fixed-right {
             <th style="text-align:right;">资源容量(kW)</th>
             <th style="text-align:right;">可调容量(kW)</th>
             <th>电压等级</th>
-            <th class="sortable" data-sort="updateTime" onclick="toggleSort('updateTime', this)">更新时间<i class="fa-solid fa-sort sort-icon"></i></th>
+            <th>更新时间</th>
             <th class="col-fixed-right col-fixed-ops col-first-right-fixed">操作</th>
           </tr>
         </thead>
@@ -2350,28 +1741,24 @@ thead th.col-fixed-right {
 
     <!-- 分页器 -->
     <div class="pagination">
-      <div class="pagination-left">
-        <span class="pagination-total" id="totalRecords">共 0 条记录</span>
-        <div class="page-size-select">
-          <span>每页</span>
-          <div class="page-size-trigger" id="pageSizeTrigger" onclick="toggleDropdown('pageSize')">
-            <span id="pageSizeValue">10条</span>
-            <i class="fa-solid fa-chevron-down"></i>
-          </div>
-          <div class="dropdown-panel" id="pageSizePanel" style="min-width:80px;">
-            <div class="dropdown-option" onclick="changePageSize(10)">10条</div>
-            <div class="dropdown-option" onclick="changePageSize(20)">20条</div>
-            <div class="dropdown-option" onclick="changePageSize(50)">50条</div>
-          </div>
+      <span class="pagination-total" id="totalRecords">共 0 条记录</span>
+      <div class="page-size-select">
+        <span>每页</span>
+        <div class="page-size-trigger" id="pageSizeTrigger" onclick="toggleDropdown('pageSize')">
+          <span id="pageSizeValue">10条</span>
+          <i class="fa-solid fa-chevron-down"></i>
+        </div>
+        <div class="dropdown-panel" id="pageSizePanel" style="min-width:80px;">
+          <div class="dropdown-option" onclick="changePageSize(10)">10条</div>
+          <div class="dropdown-option" onclick="changePageSize(20)">20条</div>
+          <div class="dropdown-option" onclick="changePageSize(50)">50条</div>
         </div>
       </div>
-      <div class="pagination-right">
-        <div class="page-numbers" id="pageNumbers"></div>
-        <div class="page-jump">
-          <span>跳至</span>
-          <input type="text" value="1" id="jumpInput" onkeydown="handleJump(event)">
-          <span>页</span>
-        </div>
+      <div class="page-numbers" id="pageNumbers"></div>
+      <div class="page-jump">
+        <span>跳至</span>
+        <input type="text" value="1" id="jumpInput" onkeydown="handleJump(event)">
+        <span>页</span>
       </div>
     </div>
   </div>
@@ -2409,15 +1796,7 @@ thead th.col-fixed-right {
     <div class="form-row">
       <div class="form-field">
         <label class="form-field-label">资源类型<span class="required">*</span></label>
-        <div class="filter-control">
-          <div class="filter-input" id="formTypeTrigger" onclick="toggleFormTypeDropdown()">
-            <div class="filter-input-text">
-              <span class="filter-input-value placeholder" id="formTypeValue">请选择资源类型</span>
-              <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
-            </div>
-          </div>
-          <div class="dropdown-panel" id="formTypePanel"></div>
-        </div>
+        <input type="text" placeholder="如：充电桩、储能、光伏、负荷" id="formType">
       </div>
       <div class="form-field">
         <label class="form-field-label">电压等级</label>
@@ -2437,15 +1816,7 @@ thead th.col-fixed-right {
     <div class="form-row full">
       <div class="form-field">
         <label class="form-field-label">区域</label>
-        <div class="filter-control">
-          <div class="filter-input" id="formRegionTrigger" onclick="toggleFormRegionCascader()">
-            <div class="filter-input-text">
-              <span class="filter-input-value placeholder" id="formRegionValue">请选择省 / 市 / 区县</span>
-              <i class="fa-solid fa-chevron-down dropdown-arrow"></i>
-            </div>
-          </div>
-          <div class="cascader-panel" id="formRegionPanel"></div>
-        </div>
+        <input type="text" placeholder="请输入资源位置" id="formRegion">
       </div>
     </div>
     <div class="form-row full">
@@ -2457,8 +1828,8 @@ thead th.col-fixed-right {
   </div>
   <div class="modal-footer">
     <span class="form-footer-hint">带 <span style="color:var(--red-500);">*</span> 为必填项</span>
-    <button class="btn btn-ghost btn-md" onclick="closeModal()">取消</button>
-    <button class="btn btn-primary btn-md" onclick="saveResource()">保存</button>
+    <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+    <button class="btn btn-primary" onclick="saveResource()">保存</button>
   </div>
 </div>
 
@@ -2478,29 +1849,8 @@ thead th.col-fixed-right {
     </div>
   </div>
   <div class="modal-footer">
-    <button class="btn btn-ghost btn-md" onclick="closeDeleteModal()">取消</button>
-    <button class="btn btn-danger btn-md" onclick="confirmDelete()">确认删除</button>
-  </div>
-</div>
-
-<!-- ============================== 弹窗：批量删除确认 ============================== -->
-<div class="modal" id="batchDeleteModal" style="width:480px;">
-  <div class="modal-header">
-    <span class="modal-title">批量删除</span>
-    <button class="modal-close" onclick="closeBatchDeleteModal()"><i class="fa-solid fa-xmark"></i></button>
-  </div>
-  <div class="modal-body">
-    <div class="modal-body-text">
-      确定要删除选中的 <strong id="batchDeleteCount">0</strong> 项资源吗？
-    </div>
-    <div class="modal-body-warning">
-      <i class="fa-solid fa-triangle-exclamation"></i>
-      此操作不可撤销，删除后数据将无法恢复。
-    </div>
-  </div>
-  <div class="modal-footer">
-    <button class="btn btn-ghost btn-md" onclick="closeBatchDeleteModal()">取消</button>
-    <button class="btn btn-danger btn-md" onclick="confirmBatchDelete()">确认删除</button>
+    <button class="btn btn-ghost" onclick="closeDeleteModal()">取消</button>
+    <button class="btn btn-danger-outline" style="background:var(--red-700);color:#FFFFFF;border-color:var(--red-700);" onclick="confirmDelete()">确认删除</button>
   </div>
 </div>
 
@@ -2585,83 +1935,14 @@ let selectedIds = new Set();
 let editingId = null;
 let deletingId = null;
 
-/* 获取当前筛选后的数据 */
-function getFilteredData() {
-  if (regionMultiSelected.size === 0) return tableData;
-  return tableData.filter(function(row) {
-    return Array.from(regionMultiSelected).some(function(selPath) {
-      return row.region.indexOf(selPath) === 0;
-    });
-  });
-}
-
-/* ==============================
-   排序
-   ============================== */
-var sortState = { key: null, dir: null };
-
-function toggleSort(key, thEl) {
-  if (sortState.key === key) {
-    if (sortState.dir === 'asc') {
-      sortState.dir = 'desc';
-    } else if (sortState.dir === 'desc') {
-      sortState.key = null;
-      sortState.dir = null;
-    }
-  } else {
-    sortState.key = key;
-    sortState.dir = 'asc';
-  }
-
-  // 更新所有表头图标
-  document.querySelectorAll('th.sortable').forEach(function(th) {
-    th.classList.remove('asc', 'desc');
-    var icon = th.querySelector('.sort-icon');
-    if (th === thEl) {
-      if (sortState.dir === 'asc') {
-        th.classList.add('asc');
-        icon.className = 'fa-solid fa-sort-up sort-icon';
-      } else if (sortState.dir === 'desc') {
-        th.classList.add('desc');
-        icon.className = 'fa-solid fa-sort-down sort-icon';
-      } else {
-        icon.className = 'fa-solid fa-sort sort-icon';
-      }
-    } else {
-      icon.className = 'fa-solid fa-sort sort-icon';
-    }
-  });
-
-  currentPage = 1;
-  renderTable();
-}
-
 /* ==============================
    渲染表格
    ============================== */
 function renderTable() {
-  // 按区域筛选
-  var filteredData = getFilteredData();
-
-  // 排序
-  if (sortState.key && sortState.dir) {
-    filteredData = filteredData.slice().sort(function(a, b) {
-      var va = a[sortState.key];
-      var vb = b[sortState.key];
-      if (sortState.key === 'updateTime') {
-        va = va.replace(/[-: ]/g, '');
-        vb = vb.replace(/[-: ]/g, '');
-      }
-      if (va < vb) return sortState.dir === 'asc' ? -1 : 1;
-      if (va > vb) return sortState.dir === 'asc' ? 1 : -1;
-      return 0;
-    });
-  }
-
   const tbody = document.getElementById('tableBody');
   const start = (currentPage - 1) * pageSize;
   const end = start + pageSize;
-  const pageData = filteredData.slice(start, end);
+  const pageData = tableData.slice(start, end);
 
   if (pageData.length === 0) {
     tbody.innerHTML = `
@@ -2709,13 +1990,14 @@ function renderTable() {
   renderPagination();
   updateBatchBar();
   updateHeaderCheckbox();
+  updateStickyShadows();
 }
 
 /* ==============================
    分页器渲染
    ============================== */
 function renderPagination() {
-  const total = getFilteredData().length;
+  const total = tableData.length;
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   document.getElementById('totalRecords').textContent = `共 ${total} 条记录`;
@@ -2768,8 +2050,7 @@ function renderPagination() {
 }
 
 function goToPage(page) {
-  const total = getFilteredData().length;
-  const totalPages = Math.max(1, Math.ceil(total / pageSize));
+  const totalPages = Math.max(1, Math.ceil(tableData.length / pageSize));
   if (page < 1 || page > totalPages) return;
   currentPage = page;
   renderTable();
@@ -2795,10 +2076,9 @@ function toggleRow(id) {
 }
 
 function toggleSelectAll() {
-  var filteredData = getFilteredData();
   const start = (currentPage - 1) * pageSize;
   const end = start + pageSize;
-  const pageData = filteredData.slice(start, end);
+  const pageData = tableData.slice(start, end);
   const allSelected = pageData.every(row => selectedIds.has(row.id));
 
   if (allSelected) {
@@ -2810,11 +2090,10 @@ function toggleSelectAll() {
 }
 
 function updateHeaderCheckbox() {
-  var filteredData = getFilteredData();
   const headerCheckbox = document.getElementById('headerCheckbox');
   const start = (currentPage - 1) * pageSize;
   const end = start + pageSize;
-  const pageData = filteredData.slice(start, end);
+  const pageData = tableData.slice(start, end);
 
   if (pageData.length === 0) {
     headerCheckbox.className = 'checkbox';
@@ -2832,18 +2111,13 @@ function updateHeaderCheckbox() {
 }
 
 function updateBatchBar() {
+  const bar = document.getElementById('batchBar');
   const count = document.getElementById('batchCount');
-  const clearBtn = document.getElementById('batchClearBtn');
-  const divider = document.getElementById('batchDivider');
   if (selectedIds.size > 0) {
-    count.style.display = '';
-    clearBtn.style.display = '';
-    divider.style.display = '';
+    bar.classList.add('show');
     count.textContent = `已选择 ${selectedIds.size} 项`;
   } else {
-    count.style.display = 'none';
-    clearBtn.style.display = 'none';
-    divider.style.display = 'none';
+    bar.classList.remove('show');
   }
 }
 
@@ -2911,54 +2185,6 @@ function handleAvatarAction(action) {
   }
 }
 
-function updateThemeToggle(theme) {
-  const toggle = document.getElementById('themeToggle');
-  if (!toggle) return;
-
-  const isLight = theme === 'light';
-  const label = isLight ? '切换为深色主题' : '切换为浅色主题';
-  toggle.setAttribute('aria-label', label);
-  toggle.setAttribute('aria-pressed', String(isLight));
-  toggle.setAttribute('title', label);
-  toggle.querySelector('i').className = isLight ? 'fa-solid fa-moon' : 'fa-solid fa-sun';
-}
-
-function toggleTheme() {
-  const current = document.documentElement.dataset.theme || 'dark';
-  const next = current === 'light' ? 'dark' : 'light';
-  document.documentElement.dataset.theme = next;
-
-  try {
-    localStorage.setItem('vpp-theme', next);
-  } catch (e) {}
-
-  updateThemeToggle(next);
-}
-
-function updateNavLayoutToggle(layout) {
-  const toggle = document.getElementById('navLayoutToggle');
-  if (!toggle) return;
-
-  const isSide = layout === 'side';
-  const label = isSide ? '切换为顶部菜单' : '切换为左侧菜单';
-  toggle.setAttribute('aria-label', label);
-  toggle.setAttribute('aria-pressed', String(isSide));
-  toggle.setAttribute('title', label);
-  toggle.querySelector('i').className = isSide ? 'fa-solid fa-window-maximize' : 'fa-solid fa-table-columns';
-}
-
-function toggleNavLayout() {
-  const current = document.documentElement.dataset.navLayout || 'top';
-  const next = current === 'side' ? 'top' : 'side';
-  document.documentElement.dataset.navLayout = next;
-
-  try {
-    localStorage.setItem('vpp-nav-layout', next);
-  } catch (e) {}
-
-  updateNavLayoutToggle(next);
-}
-
 function changePageSize(size) {
   pageSize = size;
   document.getElementById('pageSizeValue').textContent = size + '条';
@@ -2968,23 +2194,23 @@ function changePageSize(size) {
 }
 
 /* ==============================
-   级联选择（单选 — 资源类型等）
+   级联选择
    ============================== */
-let cascaderState = { type: [null, null, null] };
+let cascaderState = { region: [null, null, null], type: [null, null, null] };
 
 function toggleCascader(name) {
   closeAllDropdowns();
   const panel = document.getElementById(name + 'Panel');
   const trigger = document.getElementById(name + 'Trigger');
-  const data = resourceTypeData;
+  const data = name === 'region' ? regionData : resourceTypeData;
 
-  ensureCascaderBody(panel);
   renderCascaderColumn(name, data, 0, panel);
   panel.classList.toggle('show');
   trigger.classList.toggle('open');
 
+  // 设置宽度
   const openColumns = panel.querySelectorAll('.cascader-column').length;
-  panel.style.width = (openColumns * 180) + 'px';
+  panel.style.width = (openColumns * 160) + 'px';
 }
 
 function renderCascaderColumn(name, items, level, panel) {
@@ -2999,14 +2225,13 @@ function renderCascaderColumn(name, items, level, panel) {
 
   items.forEach((item, idx) => {
     const isSelected = cascaderState[name][level] === idx;
-    const label = typeof item === 'string' ? item : item.label;
-    const hasChildren = typeof item !== 'string' && item.children && item.children.length > 0;
+    const hasChildren = item.children && item.children.length > 0;
 
     const option = document.createElement('div');
-    option.className = 'cascader-option' + (isSelected ? ' is-active' : '');
+    option.className = 'cascader-option' + (isSelected ? ' selected' : '');
     option.innerHTML = `
-      <span class="el-cascader-node__label">${label}</span>
-      ${hasChildren ? '<i class="fa-solid fa-angle-right el-cascader-node__arrow"></i>' : ''}
+      <span>${item.label}</span>
+      ${hasChildren ? '<i class="fa-solid fa-chevron-right"></i>' : ''}
     `;
 
     option.onclick = function(e) {
@@ -3032,18 +2257,18 @@ function renderCascaderColumn(name, items, level, panel) {
 
       // 更新面板宽度
       const openColumns = panel.querySelectorAll('.cascader-column').length;
-      panel.style.width = (openColumns * 180) + 'px';
+      panel.style.width = (openColumns * 160) + 'px';
     };
 
     col.appendChild(option);
   });
 
-  ensureCascaderBody(panel).appendChild(col);
+  panel.appendChild(col);
 }
 
 function setCascaderValue(name) {
   const state = cascaderState[name];
-  const data = resourceTypeData;
+  const data = name === 'region' ? regionData : resourceTypeData;
   const trigger = document.getElementById(name + 'Trigger');
   const valueEl = trigger.querySelector('.filter-input-value');
 
@@ -3054,430 +2279,13 @@ function setCascaderValue(name) {
     if (state[i] === null) break;
     const item = current[state[i]];
     if (!item) break;
-    path.push(typeof item === 'string' ? item : item.label);
-    if (typeof item !== 'string' && item.children) {
+    path.push(item.label);
+    if (item.children) {
       current = item.children;
     }
   }
 
   if (path.length > 0) {
-    valueEl.textContent = path.join(' / ');
-    valueEl.classList.remove('placeholder');
-  }
-}
-
-/* ==============================
-   区域多选级联（Element UI 风格）
-   ============================== */
-let regionMultiSelected = new Set();       // Set of leaf paths "江苏省 / 南京市 / 浦口区"
-let regionActivePath = [null, null, null]; // [provIdx, cityIdx, distIdx]
-
-function toggleMultiCascader(name) {
-  const panel = document.getElementById(name + 'Panel');
-  const trigger = document.getElementById(name + 'Trigger');
-
-  if (panel.classList.contains('show')) {
-    panel.classList.remove('show');
-    trigger.classList.remove('open');
-    return;
-  }
-
-  closeAllDropdowns();
-  regionActivePath = [null, null, null];
-  ensureCascaderBody(panel);       // 初始化列行容器
-  renderMultiColumn(0, panel);
-  addFooter(panel);
-  panel.classList.add('show');
-  trigger.classList.add('open');
-}
-
-/* 递归收集某节点下所有叶子路径 */
-function getLeafPaths(items, parentPath) {
-  let paths = [];
-  items.forEach(function(item) {
-    var cp = parentPath ? parentPath + ' / ' + item.label : item.label;
-    if (item.children) {
-      if (typeof item.children[0] === 'string') {
-        item.children.forEach(function(c) { paths.push(cp + ' / ' + c); });
-      } else {
-        paths = paths.concat(getLeafPaths(item.children, cp));
-      }
-    }
-  });
-  return paths;
-}
-
-/* 根据父路径和子节点结构，算出 check 状态 */
-function getCheckState(path, children) {
-  var leaves;
-  if (!children) return regionMultiSelected.has(path) ? 'all' : 'none';
-  if (typeof children[0] === 'string') {
-    leaves = children.map(function(c) { return path + ' / ' + c; });
-  } else {
-    leaves = getLeafPaths(children, path);
-  }
-  var sel = leaves.filter(function(p) { return regionMultiSelected.has(p); }).length;
-  if (sel === 0) return 'none';
-  if (sel === leaves.length) return 'all';
-  return 'partial';
-}
-
-/* 勾选 / 取消勾选某个节点及其所有后代 */
-function toggleNodeSelection(path, children) {
-  var leaves;
-  if (!children) {
-    leaves = [path];
-  } else if (typeof children[0] === 'string') {
-    leaves = children.map(function(c) { return path + ' / ' + c; });
-  } else {
-    leaves = getLeafPaths(children, path);
-  }
-  var allSel = leaves.every(function(p) { return regionMultiSelected.has(p); });
-  if (allSel) {
-    leaves.forEach(function(p) { regionMultiSelected.delete(p); });
-  } else {
-    leaves.forEach(function(p) { regionMultiSelected.add(p); });
-  }
-}
-
-/* 获取当前 level 的所有项（用于全选） */
-function getItemsAtLevel(level) {
-  if (level === 0) return { items: regionData, parentPath: '' };
-  if (level === 1) {
-    var pi = regionActivePath[0];
-    if (pi === null) return null;
-    var prov = regionData[pi];
-    return { items: prov.children, parentPath: prov.label };
-  }
-  if (level === 2) {
-    var pi2 = regionActivePath[0], ci = regionActivePath[1];
-    if (pi2 === null || ci === null) return null;
-    var city = regionData[pi2].children[ci];
-    return { items: city.children, parentPath: regionData[pi2].label + ' / ' + city.label };
-  }
-  return null;
-}
-
-/* 更新面板总宽度 */
-function updatePanelWidth(panel) {
-  var cols = panel.querySelectorAll('.cascader-column').length;
-  panel.style.width = (cols * 180) + 'px';
-}
-
-/* 获取/创建列行容器（所有级联列始终在同一行） */
-function ensureCascaderBody(panel) {
-  var body = panel.querySelector('.cascader-body');
-  if (!body) {
-    body = document.createElement('div');
-    body.className = 'cascader-body';
-    panel.appendChild(body);
-  }
-  return body;
-}
-
-/* 渲染一列 */
-function renderMultiColumn(level, panel) {
-  // 清除当前列及之后列 + footer
-  var columns = panel.querySelectorAll('.cascader-column');
-  for (var i = level; i < columns.length; i++) { columns[i].remove(); }
-  var oldFooter = panel.querySelector('.cascader-footer-bar');
-  if (oldFooter) oldFooter.remove();
-
-  var ctx = getItemsAtLevel(level);
-  if (!ctx) { addFooter(panel); updatePanelWidth(panel); return; }
-  var items = ctx.items, parentPath = ctx.parentPath;
-
-  var col = document.createElement('div');
-  col.className = 'cascader-column';
-
-  // ---- 全选行 ----
-  if (level < 2) {
-    // 收集当前列所有叶节点路径
-    var allLeaves = [];
-    items.forEach(function(item) {
-      var label = typeof item === 'string' ? item : item.label;
-      var children = typeof item === 'string' ? null : item.children;
-      var ip = parentPath ? parentPath + ' / ' + label : label;
-      if (!children) {
-        allLeaves.push(ip);
-      } else if (typeof children[0] === 'string') {
-        children.forEach(function(c) { allLeaves.push(ip + ' / ' + c); });
-      } else {
-        allLeaves = allLeaves.concat(getLeafPaths(children, ip));
-      }
-    });
-    var allSel = allLeaves.length > 0 && allLeaves.every(function(p) { return regionMultiSelected.has(p); });
-
-    var allRow = document.createElement('div');
-    allRow.className = 'cascader-option cascader-option--all';
-
-    var allCb = document.createElement('span');
-    allCb.className = 'cascader-checkbox' + (allSel ? ' checked' : '');
-    allCb.onclick = function(e) {
-      e.stopPropagation();
-      if (allSel) {
-        allLeaves.forEach(function(p) { regionMultiSelected.delete(p); });
-      } else {
-        allLeaves.forEach(function(p) { regionMultiSelected.add(p); });
-      }
-      updateRegionDisplay();
-      renderMultiColumn(level, panel);
-      // 保持子列展开
-      if (regionActivePath[level] !== null) renderMultiColumn(level + 1, panel);
-      addFooter(panel);
-      updatePanelWidth(panel);
-    };
-
-    var allLabel = document.createElement('span');
-    allLabel.className = 'el-cascader-node__label';
-    allLabel.textContent = '全选';
-    allLabel.style.fontWeight = '500';
-
-    allRow.appendChild(allCb);
-    allRow.appendChild(allLabel);
-    col.appendChild(allRow);
-  }
-
-  // ---- 普通选项 ----
-  items.forEach(function(item, idx) {
-    var itemLabel = typeof item === 'string' ? item : item.label;
-    var itemChildren = (typeof item === 'string') ? null : item.children;
-    var itemPath = parentPath ? parentPath + ' / ' + itemLabel : itemLabel;
-    var isLeaf = !itemChildren || (itemChildren && typeof itemChildren[0] === 'string' && level === 2);
-    var hasChildren = itemChildren && itemChildren.length > 0 && level < 2;
-    var checkState = getCheckState(itemPath, (typeof item === 'string') ? null : itemChildren);
-    var isActive = regionActivePath[level] === idx;
-    var isChecked = checkState === 'all';
-
-    var cbClass = checkState === 'all' ? ' checked' : (checkState === 'partial' ? ' partial' : '');
-    var rowClass = 'cascader-option';
-    if (isActive) rowClass += ' is-active';
-    if (isChecked) rowClass += ' is-checked';
-
-    var row = document.createElement('div');
-    row.className = rowClass;
-
-    // checkbox
-    var cb = document.createElement('span');
-    cb.className = 'cascader-checkbox' + cbClass;
-    cb.onclick = function(e) {
-      e.stopPropagation();
-      toggleNodeSelection(itemPath, (typeof item === 'string') ? null : itemChildren);
-      updateRegionDisplay();
-      renderMultiColumn(level, panel);
-      if (hasChildren && isActive) { renderMultiColumn(level + 1, panel); }
-      addFooter(panel);
-      updatePanelWidth(panel);
-    };
-
-    // label
-    var label = document.createElement('span');
-    label.className = 'el-cascader-node__label';
-    label.textContent = itemLabel;
-
-    row.appendChild(cb);
-    row.appendChild(label);
-
-    // arrow
-    if (hasChildren) {
-      var arrow = document.createElement('i');
-      arrow.className = 'fa-solid fa-angle-right el-cascader-node__arrow';
-      row.appendChild(arrow);
-    }
-
-    // 点击行 → 展开下一级
-    row.onclick = function(e) {
-      e.stopPropagation(); // 阻止冒泡到 document → closeAllDropdowns
-      if (e.target === cb) return; // checkbox 已单独处理
-      if (!hasChildren) return;
-      regionActivePath[level] = idx;
-      for (var j = level + 1; j < 3; j++) regionActivePath[j] = null;
-      renderMultiColumn(level, panel);
-      renderMultiColumn(level + 1, panel);
-      addFooter(panel);
-      updatePanelWidth(panel);
-    };
-
-    col.appendChild(row);
-  });
-
-  ensureCascaderBody(panel).appendChild(col);
-  updatePanelWidth(panel);
-}
-
-/* 追加底部操作栏 */
-function addFooter(panel) {
-  var oldFooter = panel.querySelector('.cascader-footer-bar');
-  if (oldFooter) oldFooter.remove();
-  var count = regionMultiSelected.size;
-  var footer = document.createElement('div');
-  footer.className = 'cascader-footer-bar';
-  footer.innerHTML =
-    '<span class="cascader-footer-bar-count">已选 ' + count + ' 项</span>' +
-    '<div style="display:flex;gap:6px;flex-shrink:0;min-width:0;">' +
-      '<button class="cascader-footer-bar-btn" onclick="event.stopPropagation();regionMultiSelected.clear();regionActivePath=[null,null,null];updateRegionDisplay();closeAllDropdowns();applyFilters();">重置</button>' +
-      '<button class="cascader-footer-bar-btn cascader-footer-bar-btn--confirm" onclick="event.stopPropagation();closeAllDropdowns();applyFilters();">确认</button>' +
-    '</div>';
-  panel.appendChild(footer);
-}
-
-/* ---------- Trigger 展示 ---------- */
-
-function updateRegionDisplay() {
-  var tagsContainer = document.getElementById('regionTags');
-  var countEl = document.getElementById('regionCount');
-  var count = regionMultiSelected.size;
-
-  if (count === 0) {
-    tagsContainer.innerHTML = '<span class="filter-input-placeholder">请选择省 / 市 / 区县</span>';
-    countEl.style.display = 'none';
-    return;
-  }
-
-  countEl.style.display = '';
-  countEl.textContent = count + '项';
-
-  var items = Array.from(regionMultiSelected);
-  var maxShow = 2;
-  var html = '';
-  items.slice(0, maxShow).forEach(function(item) {
-    var parts = item.split(' / ');
-    var lastPart = parts[parts.length - 1];
-    var escaped = item.replace(/'/g, "\\'");
-    html += '<span class="filter-input-tag" title="' + item + '">' + lastPart +
-      '<span class="filter-input-tag-close" data-path="' + escaped + '" onclick="event.stopPropagation();removeRegionTag(this);">\u00d7</span></span>';
-  });
-  if (items.length > maxShow) {
-    html += '<span class="filter-input-tag-more">+' + (items.length - maxShow) + '</span>';
-  }
-  tagsContainer.innerHTML = html;
-}
-
-function removeRegionTag(el) {
-  var path = el.getAttribute('data-path');
-  regionMultiSelected.delete(path);
-  updateRegionDisplay();
-}
-
-/* ==============================
-   表单弹窗 — 资源类型下拉（单选）
-   ============================== */
-const formTypeOptions = ['充电桩', '储能', '光伏', '负荷', '风电', '水电'];
-
-function toggleFormTypeDropdown() {
-  closeAllDropdowns();
-  const panel = document.getElementById('formTypePanel');
-  const trigger = document.getElementById('formTypeTrigger');
-  const currentValueEl = document.getElementById('formTypeValue');
-  const currentValue = currentValueEl.classList.contains('placeholder') ? '' : currentValueEl.textContent.trim();
-
-  panel.innerHTML = formTypeOptions.map(t => `
-    <div class="dropdown-option ${t === currentValue ? 'selected' : ''}" onclick="selectFormType('${t}')">
-      <span>${t}</span>
-      ${t === currentValue ? '<i class="fa-solid fa-check"></i>' : ''}
-    </div>
-  `).join('');
-  panel.classList.toggle('show');
-  trigger.classList.toggle('open');
-}
-
-function selectFormType(value) {
-  const valueEl = document.getElementById('formTypeValue');
-  valueEl.textContent = value;
-  valueEl.classList.remove('placeholder');
-  document.getElementById('formTypePanel').classList.remove('show');
-  document.getElementById('formTypeTrigger').classList.remove('open');
-}
-
-/* ==============================
-   表单弹窗 — 区域级联（单选）
-   ============================== */
-let formRegionState = [null, null, null];
-
-function toggleFormRegionCascader() {
-  closeAllDropdowns();
-  const panel = document.getElementById('formRegionPanel');
-  const trigger = document.getElementById('formRegionTrigger');
-
-  renderFormRegionColumn(0, panel);
-  panel.classList.toggle('show');
-  trigger.classList.toggle('open');
-
-  const openColumns = panel.querySelectorAll('.cascader-column').length;
-  panel.style.width = (openColumns * 180) + 'px';
-}
-
-function renderFormRegionColumn(level, panel) {
-  const columns = panel.querySelectorAll('.cascader-column');
-  for (let i = level; i < columns.length; i++) {
-    columns[i].remove();
-  }
-
-  let items;
-  if (level === 0) {
-    items = regionData;
-  } else if (level === 1) {
-    if (formRegionState[0] === null) return;
-    items = regionData[formRegionState[0]].children;
-  } else if (level === 2) {
-    if (formRegionState[0] === null || formRegionState[1] === null) return;
-    items = regionData[formRegionState[0]].children[formRegionState[1]].children;
-  } else {
-    return;
-  }
-
-  const col = document.createElement('div');
-  col.className = 'cascader-column';
-
-  items.forEach((item, idx) => {
-    const label = typeof item === 'string' ? item : item.label;
-    const hasChildren = typeof item !== 'string' && item.children && item.children.length > 0 && level < 2;
-    const isSelected = formRegionState[level] === idx;
-
-    const option = document.createElement('div');
-    option.className = 'cascader-option' + (isSelected ? ' is-active' : '');
-    option.innerHTML = `
-      <span class="el-cascader-node__label">${label}</span>
-      ${hasChildren ? '<i class="fa-solid fa-angle-right el-cascader-node__arrow"></i>' : ''}
-    `;
-
-    option.onclick = function(e) {
-      e.stopPropagation();
-      formRegionState[level] = idx;
-      for (let i = level + 1; i < 3; i++) formRegionState[i] = null;
-
-      renderFormRegionColumn(level, panel);
-
-      if (hasChildren) {
-        renderFormRegionColumn(level + 1, panel);
-      } else {
-        setFormRegionValue();
-        closeAllDropdowns();
-      }
-
-      const openColumns = panel.querySelectorAll('.cascader-column').length;
-      panel.style.width = (openColumns * 180) + 'px';
-    };
-
-    col.appendChild(option);
-  });
-
-  panel.appendChild(col);
-}
-
-function setFormRegionValue() {
-  let path = [];
-  let current = regionData;
-  for (let i = 0; i < 3; i++) {
-    if (formRegionState[i] === null) break;
-    const item = current[formRegionState[i]];
-    if (!item) break;
-    path.push(typeof item === 'string' ? item : item.label);
-    if (item.children) current = item.children;
-  }
-
-  if (path.length > 0) {
-    const valueEl = document.getElementById('formRegionValue');
     valueEl.textContent = path.join(' / ');
     valueEl.classList.remove('placeholder');
   }
@@ -3496,21 +2304,6 @@ function closeAllDropdowns() {
 
 // 点击外部关闭
 document.addEventListener('click', function(e) {
-  const navDropdown = e.target.closest('.header-nav-dropdown');
-  if (navDropdown && !e.target.closest('.header-submenu-item')) {
-    const willOpen = !navDropdown.classList.contains('open');
-    document.querySelectorAll('.header-nav-dropdown.open').forEach(item => {
-      item.classList.remove('open');
-      item.setAttribute('aria-expanded', 'false');
-    });
-    navDropdown.classList.toggle('open', willOpen);
-    navDropdown.setAttribute('aria-expanded', String(willOpen));
-    return;
-  }
-  document.querySelectorAll('.header-nav-dropdown.open').forEach(item => {
-    item.classList.remove('open');
-    item.setAttribute('aria-expanded', 'false');
-  });
   if (!e.target.closest('.filter-control') && !e.target.closest('.page-size-select') && !e.target.closest('.header-avatar-wrapper')) {
     closeAllDropdowns();
   }
@@ -3519,35 +2312,24 @@ document.addEventListener('click', function(e) {
 /* ==============================
    筛选操作
    ============================== */
-function toggleFilterSection() {
-  const section = document.querySelector('.filter-section');
-  const toggle = document.getElementById('filterToggle');
-  const isCollapsed = section.classList.toggle('is-collapsed');
-
-  if (isCollapsed) closeAllDropdowns();
-  toggle.setAttribute('aria-expanded', String(!isCollapsed));
-  toggle.querySelector('span').textContent = isCollapsed ? '展开' : '收起';
-}
-
 function applyFilters() {
-  currentPage = 1;
   showToast('查询完成', 'success');
   renderTable();
 }
 
 function resetFilters() {
-  // 重置区域多选
-  regionMultiSelected.clear();
-  regionActivePath = [null, null, null];
-  updateRegionDisplay();
-  // 重置资源类型
-  cascaderState = { type: [null, null, null] };
-  document.querySelectorAll('.filter-input-value').forEach(function(el) {
+  // 重置区域
+  cascaderState = { region: [null, null, null], type: [null, null, null] };
+  document.querySelectorAll('.filter-input-value').forEach(el => {
     el.textContent = el.getAttribute('data-default') || '';
     el.classList.add('placeholder');
   });
+  // 重置文本
+  const regionTrigger = document.getElementById('regionTrigger');
   const typeTrigger = document.getElementById('typeTrigger');
   const userTrigger = document.getElementById('userTrigger');
+  regionTrigger.querySelector('.filter-input-value').textContent = '请选择省 / 市 / 区县';
+  regionTrigger.querySelector('.filter-input-value').classList.add('placeholder');
   typeTrigger.querySelector('.filter-input-value').textContent = '请选择资源类别';
   typeTrigger.querySelector('.filter-input-value').classList.add('placeholder');
   userTrigger.querySelector('.filter-input-value').textContent = '请选择归属企业';
@@ -3564,14 +2346,6 @@ function openAddModal() {
   editingId = null;
   document.getElementById('modalTitle').textContent = '新增资源';
   document.querySelectorAll('#formModal input, #formModal textarea').forEach(el => el.value = '');
-  // Reset custom selectors
-  const formTypeValue = document.getElementById('formTypeValue');
-  formTypeValue.textContent = '请选择资源类型';
-  formTypeValue.classList.add('placeholder');
-  formRegionState = [null, null, null];
-  const formRegionValue = document.getElementById('formRegionValue');
-  formRegionValue.textContent = '请选择省 / 市 / 区县';
-  formRegionValue.classList.add('placeholder');
   showModal('formModal');
 }
 
@@ -3585,18 +2359,11 @@ function openEditModal(id) {
   document.getElementById('formAccount').value = row.account;
   document.getElementById('formOperator').value = row.operator;
   document.getElementById('formUser').value = row.user;
-  // Set custom type selector
-  const formTypeValue = document.getElementById('formTypeValue');
-  formTypeValue.textContent = row.type;
-  formTypeValue.classList.remove('placeholder');
+  document.getElementById('formType').value = row.type;
   document.getElementById('formVoltage').value = row.voltage;
   document.getElementById('formCapacity').value = row.capacity;
   document.getElementById('formAdjustable').value = row.adjustable;
-  // Set custom region selector
-  formRegionState = [null, null, null];
-  const formRegionValue = document.getElementById('formRegionValue');
-  formRegionValue.textContent = row.region;
-  formRegionValue.classList.remove('placeholder');
+  document.getElementById('formRegion').value = row.region;
   showModal('formModal');
 }
 
@@ -3613,12 +2380,6 @@ function saveResource() {
     return;
   }
 
-  // Read from custom selectors
-  const formTypeValueEl = document.getElementById('formTypeValue');
-  const type = formTypeValueEl.classList.contains('placeholder') ? '' : formTypeValueEl.textContent.trim();
-  const formRegionValueEl = document.getElementById('formRegionValue');
-  const region = formRegionValueEl.classList.contains('placeholder') ? '' : formRegionValueEl.textContent.trim();
-
   const now = new Date();
   const timeStr = now.getFullYear() + '-' +
     String(now.getMonth() + 1).padStart(2, '0') + '-' +
@@ -3633,11 +2394,11 @@ function saveResource() {
       row.account = account;
       row.operator = document.getElementById('formOperator').value.trim() || row.operator;
       row.user = document.getElementById('formUser').value.trim() || row.user;
-      row.type = type || row.type;
+      row.type = document.getElementById('formType').value.trim() || row.type;
       row.voltage = document.getElementById('formVoltage').value.trim() || row.voltage;
       row.capacity = parseInt(document.getElementById('formCapacity').value) || row.capacity;
       row.adjustable = parseInt(document.getElementById('formAdjustable').value) || row.adjustable;
-      row.region = region || row.region;
+      row.region = document.getElementById('formRegion').value.trim() || row.region;
       row.updateTime = timeStr;
     }
     showToast('资源已更新', 'success');
@@ -3649,8 +2410,8 @@ function saveResource() {
       operator: document.getElementById('formOperator').value.trim() || '-',
       user: document.getElementById('formUser').value.trim() || '-',
       account: account,
-      region: region || '-',
-      type: type || '负荷',
+      region: document.getElementById('formRegion').value.trim() || '-',
+      type: document.getElementById('formType').value.trim() || '负荷',
       capacity: parseInt(document.getElementById('formCapacity').value) || 0,
       adjustable: parseInt(document.getElementById('formAdjustable').value) || 0,
       voltage: document.getElementById('formVoltage').value.trim() || '-',
@@ -3689,7 +2450,6 @@ function confirmBatchDelete() {
   const count = selectedIds.size;
   tableData = tableData.filter(r => !selectedIds.has(r.id));
   selectedIds.clear();
-  closeBatchDeleteModal();
   renderTable();
   showToast(`已删除 ${count} 项资源`, 'success');
 }
@@ -3699,8 +2459,7 @@ function batchDelete() {
     showToast('请先勾选要删除的资源', 'warning');
     return;
   }
-  document.getElementById('batchDeleteCount').textContent = selectedIds.size;
-  showModal('batchDeleteModal');
+  confirmBatchDelete();
 }
 
 /* ==============================
@@ -3725,18 +2484,12 @@ function showModal(id) {
 function closeModal() {
   document.getElementById('overlay').classList.remove('show');
   document.getElementById('formModal').classList.remove('show');
-  closeAllDropdowns();
 }
 
 function closeDeleteModal() {
   document.getElementById('overlay').classList.remove('show');
   document.getElementById('deleteModal').classList.remove('show');
   deletingId = null;
-}
-
-function closeBatchDeleteModal() {
-  document.getElementById('overlay').classList.remove('show');
-  document.getElementById('batchDeleteModal').classList.remove('show');
 }
 
 /* ==============================
@@ -3762,13 +2515,51 @@ function showToast(message, type = 'success') {
 }
 
 /* ==============================
+   固定列滚动阴影切换（表格规范 §12.5）
+   ============================== */
+let scrollTimer = null;
+function updateStickyShadows() {
+  const scroll = document.querySelector('.table-scroll');
+  if (!scroll) return;
+  const threshold = 1;
+  if (scroll.scrollLeft <= threshold) {
+    scroll.classList.add('no-left-shadow');
+  } else {
+    scroll.classList.remove('no-left-shadow');
+  }
+  if (scroll.scrollLeft + scroll.clientWidth >= scroll.scrollWidth - threshold) {
+    scroll.classList.add('no-right-shadow');
+  } else {
+    scroll.classList.remove('no-right-shadow');
+  }
+}
+
+function handleTableScroll() {
+  const scroll = document.querySelector('.table-scroll');
+  if (!scroll) return;
+
+  // 滚动时显示阴影
+  scroll.classList.add('is-scrolling');
+  clearTimeout(scrollTimer);
+  // 停止滚动 150ms 后隐藏
+  scrollTimer = setTimeout(() => {
+    scroll.classList.remove('is-scrolling');
+  }, 150);
+
+  updateStickyShadows();
+}
+
+const tableScrollEl = document.querySelector('.table-scroll');
+if (tableScrollEl) {
+  tableScrollEl.addEventListener('scroll', handleTableScroll);
+}
+
+/* ==============================
    初始化
    ============================== */
 renderTable();
-updateThemeToggle(document.documentElement.dataset.theme || 'dark');
-updateNavLayoutToggle(document.documentElement.dataset.navLayout || 'top');
+updateStickyShadows();
 </script>
-<script src="shared-table-interactions.js"></script>
 
 </body>
 </html>

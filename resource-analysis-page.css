@@ -1,0 +1,18 @@
+.analysis-content { display:grid; gap:16px; }
+.analysis-split { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; align-items:stretch; }
+.analysis-split > .card { min-width:0; display:flex; flex-direction:column; }
+.analysis-split > .card .module-header { flex:0 0 44px; }
+.analysis-split > .card .module-body { flex:1; display:flex; flex-direction:column; }
+.analysis-split > .card .chart-frame { flex:1; min-height:248px; }
+.analysis-split #forecastChart .chart-scroll svg { height:100%; }
+.info-strip { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); }
+.info-field { min-width:0; min-height:72px; padding:12px 16px; border-right:1px solid var(--border-divider); }
+.info-field:last-child { border-right:0; }
+.info-label { margin-bottom:8px; color:var(--text-muted); font-size:12px; }
+.info-value { min-width:0; color:var(--text-primary); font-size:13px; font-weight:500; line-height:20px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+@media (max-width:991px) { .analysis-split { grid-template-columns:1fr; } }
+@media (max-width:767px) {
+  .info-strip { grid-template-columns:1fr; }
+  .info-field:nth-child(n) { border-right:0; border-bottom:1px solid var(--border-divider); }
+  .info-field:last-child { border-bottom:0; }
+}
