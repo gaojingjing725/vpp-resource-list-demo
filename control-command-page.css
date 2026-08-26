@@ -1,0 +1,23 @@
+.command-content { display:grid; gap:16px; }
+.device-grid { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; }
+.device-card { min-width:0; padding:16px; background:var(--card-bg); border:1px solid var(--border-subtle); border-radius:12px; transition:border-color 150ms ease,background-color 150ms ease; }
+.device-card:hover { border-color:var(--border-hover); background:var(--card-bg-alt); }
+.device-card-head { padding-bottom:12px; margin-bottom:12px; border-bottom:1px solid var(--border-divider); }
+.device-name { min-width:0; display:flex; align-items:flex-start; gap:8px; color:var(--text-primary); font-size:15px; font-weight:600; line-height:22px; }
+.device-name i { width:28px; height:28px; flex:0 0 28px; display:inline-flex; align-items:center; justify-content:center; border:1px solid var(--border-active); border-radius:6px; background:var(--hover-bg); color:var(--primary-400); font-size:14px; }
+.device-name span { min-width:0; display:-webkit-box; overflow:hidden; overflow-wrap:anywhere; -webkit-box-orient:vertical; -webkit-line-clamp:2; }
+.device-info { display:grid; gap:8px; }
+.device-info-row { display:grid; grid-template-columns:64px minmax(0,1fr); gap:12px; color:var(--text-secondary); font-size:13px; line-height:20px; }
+.device-info-label { color:var(--text-muted); }
+.device-info-value { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.device-detail { flex:0 0 auto; display:inline-flex; align-items:center; gap:4px; padding:0; border:0; background:transparent; color:var(--primary-400); font:400 14px/22px var(--font-sans); cursor:pointer; }
+.device-detail i { font-size:11px; }
+.device-detail:hover { color:var(--primary-300); }
+.device-detail:hover span { text-decoration:underline; text-underline-offset:3px; }
+.device-card-actions { display:flex; justify-content:flex-end; padding-top:8px; }
+.device-card[hidden] { display:none; }
+.empty-state { display:none; grid-column:1/-1; min-height:160px; align-items:center; justify-content:center; color:var(--text-muted); font-size:14px; background:var(--card-bg); border:1px solid var(--border-subtle); border-radius:12px; }
+.empty-state.show { display:flex; }
+@media (max-width:1279px) { .device-grid { grid-template-columns:repeat(3,minmax(0,1fr)); } }
+@media (max-width:1023px) { .device-grid { grid-template-columns:repeat(2,minmax(0,1fr)); } }
+@media (max-width:767px) { .device-grid { grid-template-columns:1fr; } }
