@@ -1,3 +1,11 @@
+@font-face {
+  font-family: "Alimama ShuHeiTi";
+  font-weight: 700;
+  src: url("https://at.alicdn.com/wf/webfont/kfq1sgJFWQ6g/cPCrTL8ewntCCMPMNgo40.woff2") format("woff2"),
+       url("https://at.alicdn.com/wf/webfont/kfq1sgJFWQ6g/fu9Q_dW8qzsGtfSSU60a3.woff") format("woff");
+  font-display: swap;
+}
+
 .header {
   position: fixed;
   inset: 0 0 auto;
@@ -13,7 +21,7 @@
 .header-logo { display: flex; align-items: center; gap: 8px; padding-right: 24px; margin-right: 8px; border-right: 1px solid var(--border-divider, var(--divider)); white-space: nowrap; }
 .header-logo-icon { width: 32px; height: 32px; flex: 0 0 32px; display: flex; align-items: center; justify-content: center; border-radius: 10px; background: linear-gradient(145deg,#061D35 0%,#0B2B4F 35%,#114480 100%); border: 1px solid rgba(23,118,229,.30); box-shadow: 0 4px 12px rgba(3,12,27,.50),0 0 0 1px rgba(23,118,229,.08),inset 0 1px 0 rgba(255,255,255,.05); }
 .header-logo-icon svg { width: 20px; height: 20px; }
-.header-logo-title { font-family: var(--font-sans, var(--font)); font-size: 17px; font-weight: 700; font-style: normal; line-height: 24px; letter-spacing: 1px; color: var(--text-primary, var(--text)); white-space: nowrap; }
+.header-logo-title { font-family: "Alimama ShuHeiTi", var(--font-sans, var(--font)); font-size: 17px; font-weight: 700; font-style: normal; line-height: 24px; letter-spacing: 1px; color: var(--text-primary, var(--text)); white-space: nowrap; }
 .header-nav { height: 100%; display: flex; align-items: stretch; gap: 4px; }
 .header-nav-item,.header-submenu-item,.header-logo-title { font-synthesis: none; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: geometricPrecision; }
 .header-nav-item,.header-submenu-item { font-family: var(--font-sans, var(--font)); font-size: 13px; font-weight: 500; font-style: normal; line-height: 1.4; letter-spacing: 0; }
