@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark" data-nav-layout="top">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>聚合管理 - 虚拟电厂智慧运营平台</title>
+<script>
+try {
+  document.documentElement.dataset.theme = localStorage.getItem('vpp-theme') || 'dark';
+  document.documentElement.dataset.navLayout = localStorage.getItem('vpp-nav-layout') || 'top';
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="shared-navigation.css?v=20260827-3">
+<link rel="stylesheet" href="shared-list-components.css?v=20260821-6">
+<link rel="stylesheet" href="shared-primary-menu-active.css">
+<link rel="stylesheet" href="shared-theme.css">
+<style>
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body {
+  height: 100%;
+  min-width: 320px;
+  margin: 0;
+  overflow: hidden;
+  background-color: var(--page-bg);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+  --font-mono: "SF Mono", "Fira Code", "JetBrains Mono", Consolas, monospace;
+  --content-px: 24px;
+  --content-py: 24px;
+  --fixed-bg-default: #0D2137;
+  --fixed-bg-hover: #0E2845;
+  --fixed-bg-selected: #0F2C4E;
+  --fixed-bg-header: #132D4A;
+  --violet-500: #7C5CFF;
+  --z-content: 0;
+  --z-fixed-cell: 1;
+  --z-sticky: 1;
+  --z-table-header: 2;
+  --z-fixed-corner: 3;
+  --z-dropdown: 1000;
+  --z-modal: 1300;
+  --z-modal-mask: 1299;
+  --z-toast: 1400;
+}
+
+:root[data-theme="light"] {
+  --fixed-bg-default: #FFFFFF;
+  --fixed-bg-hover: #F3F8FF;
+  --fixed-bg-selected: #EAF3FF;
+  --fixed-bg-header: #E5EDF7;
+}
+
+.aggregation-page {
+  position: fixed;
+  top: var(--header-h);
+  right: 0;
+  bottom: 0;
+  left: 0;
+  min-width: 0;
+  padding: 0 var(--content-px) var(--content-py);
+  overflow-y: auto;
+  transition: left 200ms ease;
+}
+
+:root[data-nav-layout="side"] .aggregation-page {
+  left: var(--nav-sidebar-w, 220px);
+}
+
+.aggregation-page .filter-grid {
+  display: contents;
+}
+.aggregation-page .filter-row {
+  grid-template-columns: 1fr;
+}
+@media (min-width: 768px) {
+  .aggregation-page .filter-row {
+    grid-template-columns: repeat(2, 220px) auto;
+    justify-content: start;
+  }
+}
+.aggregation-page .select-control {
+  position: relative;
+  padding-right: 40px;
+}
+.aggregation-page .select-control > i {
+  position: absolute;
+  right: 14px;
+}
+.aggregation-page .filter-actions { gap: var(--space-1); }
+
+.aggregation-page .action-bar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 30px;
+  margin-bottom: var(--space-2);
+}
+.aggregation-page .action-divider {
+  width: 1px;
+  height: 20px;
+  margin: 0 var(--space-2);
+  background: var(--border-divider);
+}
+.aggregation-page .table-container {
+  overflow: hidden;
+}
+.aggregation-page .table-scroll {
+  position: relative;
+  overflow-x: auto;
+}
+.aggregation-page .avatar-option-icon { margin-right: 4px; font-size: 12px; opacity: .7; }
+.aggregation-page .batch-count { margin-right: var(--space-1); color: var(--primary-300); font-size: 13px; font-weight: 500; white-space: nowrap; }
+.aggregation-page .delete-message { margin: 0; color: var(--text-secondary); line-height: 22px; }
+.aggregation-page .delete-warning { margin: 12px 0 0; color: var(--orange-500); font-size: 13px; line-height: 20px; }
+.aggregation-page .empty-cell { height: 160px; color: var(--text-muted); text-align: center; }
+
+.aggregation-table {
+  width: 100%;
+  min-width: 1380px !important;
+  border-collapse: collapse;
+  table-layout: auto;
+}
+.aggregation-table thead tr,
+.aggregation-table tbody tr { height: 48px; }
+.aggregation-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-table-header, 2);
+  height: 48px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border-divider);
+  background: var(--fixed-bg-header);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 22px;
+  text-align: left;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.aggregation-table thead th.num-header { text-align: right; }
+.aggregation-table tbody td {
+  height: 48px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border-subtle);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 22px;
+  vertical-align: middle;
+  white-space: nowrap;
+}
+.aggregation-table tbody tr { transition: background 150ms ease; }
+.aggregation-table tbody tr:hover { background: var(--hover-bg, var(--hover)); }
+.aggregation-table tbody tr.selected,
+.aggregation-table tbody tr.selected:hover { background: rgba(23,118,229,.10); }
+.aggregation-table tbody tr:last-child td { border-bottom: 0; }
+.aggregation-table .td-text-ellipsis { max-width: 240px; overflow: hidden; text-overflow: ellipsis; }
+.aggregation-table th,
+.aggregation-table td { position: relative; }
+.aggregation-table th.col-fixed-checkbox,
+.aggregation-table td.col-fixed-checkbox { width: 48px; min-width: 48px; text-align: center; }
+.aggregation-table th.col-fixed-name,
+.aggregation-table td.col-fixed-name { width: 180px; min-width: 180px; }
+.aggregation-table th.col-fixed-ops,
+.aggregation-table td.col-fixed-ops { width: 100px; min-width: 100px; }
+
+.aggregation-table th.col-fixed-left,
+.aggregation-table td.col-fixed-left { position: sticky; left: 0; overflow: visible; }
+.aggregation-table th.col-fixed-left.col-fixed-name,
+.aggregation-table td.col-fixed-left.col-fixed-name { left: 48px; }
+.aggregation-table th.col-fixed-right,
+.aggregation-table td.col-fixed-right { position: sticky; right: 0; overflow: visible; }
+.aggregation-table thead th.col-fixed-left,
+.aggregation-table thead th.col-fixed-right { z-index: var(--z-fixed-corner, 3); background: var(--fixed-bg-header); }
+.aggregation-table tbody td.col-fixed-left,
+.aggregation-table tbody td.col-fixed-right { z-index: var(--z-fixed-cell, 1); background: var(--fixed-bg-default); }
+.aggregation-table tbody tr:hover td.col-fixed-left,
+.aggregation-table tbody tr:hover td.col-fixed-right { background: var(--fixed-bg-hover); }
+.aggregation-table tbody tr.selected td.col-fixed-left,
+.aggregation-table tbody tr.selected td.col-fixed-right,
+.aggregation-table tbody tr.selected:hover td.col-fixed-left,
+.aggregation-table tbody tr.selected:hover td.col-fixed-right { background: var(--fixed-bg-selected); }
+
+.aggregation-table .aggregation-name { color: inherit; font-weight: 400; }
+.aggregation-table .num { text-align: right; font-family: var(--font-mono); }
+.aggregation-table .date { color: var(--text-secondary); }
+
+.aggregation-type {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid rgba(72,151,243,.28);
+  border-radius: var(--radius-sm);
+  color: var(--primary-300);
+  background: rgba(72,151,243,.09);
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.aggregation-type.load { color: var(--violet-500); border-color: rgba(124,92,255,.30); background: rgba(124,92,255,.10); }
+.aggregation-type.power { color: var(--orange-500); border-color: rgba(255,181,71,.30); background: rgba(255,181,71,.10); }
+.aggregation-type.mixed { color: var(--cyan-500); border-color: rgba(0,212,255,.30); background: rgba(0,212,255,.09); }
+
+.checkbox {
+  width: 16px;
+  height: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--border-hover);
+  border-radius: 4px;
+  background: transparent;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+.checkbox:hover { border-color: var(--primary-400); }
+.checkbox.checked,
+.checkbox.indeterminate { border-color: var(--primary-500); background: var(--primary-500); }
+.checkbox.checked::after {
+  content: "";
+  width: 5px;
+  height: 9px;
+  border: solid #FFF;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+  margin-bottom: 2px;
+}
+.checkbox.indeterminate::after { content: ""; width: 8px; height: 2px; border-radius: 1px; background: #FFF; }
+
+.action-links { display: flex; align-items: center; flex-wrap: nowrap; white-space: nowrap; }
+.action-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--primary-400);
+  font: 400 14px/22px var(--font-sans);
+  cursor: pointer;
+}
+.action-link:hover { color: var(--primary-300); }
+.action-separator { width: 1px; height: 12px; margin: 0 var(--space-3); background: var(--border-divider); }
+
+.aggregation-toast {
+  position: fixed;
+  top: 72px;
+  left: 50%;
+  z-index: var(--z-toast, 1400);
+  padding: 10px 16px;
+  border: 1px solid var(--border-secondary);
+  border-radius: var(--radius-md);
+  background: var(--surface-overlay);
+  box-shadow: var(--overlay-shadow);
+  color: var(--text-primary);
+  font-size: 14px;
+  transform: translate(-50%, -8px);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 160ms ease, transform 160ms ease, visibility 160ms ease;
+}
+.aggregation-toast.show { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+
+.modal-mask {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal-mask, 1299);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0,0,0,.60);
+}
+.modal-mask.open { display: flex; }
+.aggregation-modal {
+  width: min(100%, 640px);
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid rgba(22,104,220,.15);
+  border-radius: var(--radius-xl);
+  background: var(--card-bg);
+  box-shadow: 0 24px 64px rgba(0,0,0,.50);
+}
+.aggregation-modal.small { width: min(100%, 480px); }
+.aggregation-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 58px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border-divider);
+  flex-shrink: 0;
+}
+.aggregation-modal-title { color: var(--text-primary); font-size: 18px; font-weight: 600; line-height: 26px; }
+.modal-close {
+  width: 32px;
+  height: 32px;
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+.modal-close:hover { color: var(--text-primary); background: var(--hover-bg); }
+.modal-close:focus-visible,
+.action-link:focus-visible,
+.checkbox:focus-visible { outline: 2px solid var(--primary-400); outline-offset: 2px; }
+.aggregation-modal-body {
+  max-height: 480px;
+  overflow-y: auto;
+  flex-shrink: 0;
+  padding: 24px;
+}
+.aggregation-modal.small .aggregation-modal-body { max-height: 320px; }
+.aggregation-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.aggregation-form-field { min-width: 0; }
+.aggregation-form-field.full { grid-column: 1 / -1; }
+.aggregation-form-label { display: block; margin-bottom: 6px; color: var(--text-secondary); font-size: 14px; line-height: 22px; }
+.aggregation-form-label.required::before { content: "*"; margin-right: 4px; color: var(--red-500); }
+.aggregation-input,
+.modal-select-trigger {
+  width: 100%;
+  height: 38px;
+  padding: 0 var(--space-4);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  outline: 0;
+  background: transparent;
+  color: var(--text-primary);
+  font: 400 14px/22px var(--font-sans);
+}
+.aggregation-input:focus,
+.modal-select-trigger:focus { border-color: var(--border-active); box-shadow: 0 0 0 3px rgba(23,118,229,.10); }
+.aggregation-input::placeholder { color: var(--text-muted); }
+.modal-select { position: relative; }
+.modal-select-trigger { position: relative; display: flex; align-items: center; justify-content: space-between; gap: var(--space-2); padding-right: 40px; cursor: pointer; }
+.modal-select-trigger > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.modal-select-trigger > i { position: absolute; right: 14px; color: var(--text-muted); font-size: 10px; pointer-events: none; }
+.modal-select-trigger.placeholder { color: var(--text-muted); }
+.modal-select-panel {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  left: 0;
+  z-index: 3;
+  display: none;
+  padding: 4px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  background: var(--surface-overlay);
+  box-shadow: var(--overlay-shadow);
+}
+.modal-select.open .modal-select-panel { display: block; }
+.modal-select-option { display: flex; align-items: center; min-height: 34px; padding: 0 12px; border-radius: var(--radius-sm); color: var(--text-secondary); cursor: pointer; }
+.modal-select-option:hover,
+.modal-select-option.active { color: var(--primary-400); background: var(--hover-bg); }
+.form-hint { min-height: 18px; margin-top: 6px; color: var(--red-500); font-size: 12px; line-height: 18px; }
+.aggregation-modal-footer { display: flex; align-items: center; justify-content: flex-end; gap: var(--space-3); padding: 16px 24px; border-top: 1px solid var(--border-divider); flex-shrink: 0; }
+.topology-summary { margin-bottom: 16px; color: var(--text-secondary); font-size: 14px; line-height: 22px; }
+.topology-canvas { width: 100%; height: 280px; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); background: linear-gradient(145deg, rgba(23,118,229,.08), rgba(0,212,255,.02)); }
+.topology-canvas svg { width: 100%; height: 100%; }
+.topology-line { stroke: var(--primary-400); stroke-width: 1.5; stroke-dasharray: 5 5; opacity: .72; }
+.topology-node { fill: var(--card-bg); stroke: var(--primary-300); stroke-width: 1.5; }
+.topology-node.core { fill: rgba(23,118,229,.34); stroke: var(--cyan-500); }
+.topology-label { fill: var(--text-primary); font: 12px var(--font-sans); text-anchor: middle; }
+
+@media (max-width: 767px) {
+  .aggregation-page { padding-right: 12px; padding-left: 12px; }
+  .aggregation-page .filter-actions { justify-content: flex-start; }
+  .aggregation-form-grid { grid-template-columns: 1fr; }
+  .aggregation-form-field.full { grid-column: auto; }
+  .aggregation-modal-body { padding: 16px; }
+  .aggregation-modal-header { padding: 12px 16px; }
+  .aggregation-modal-footer { padding: 12px 16px; }
+  .aggregation-page .pagination { align-items: flex-start; flex-direction: column; }
+  .aggregation-page .pagination-right { width: 100%; justify-content: space-between; }
+}
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="header-left">
+    <div class="header-logo">
+      <div class="header-logo-icon">
+        <svg viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <circle cx="16" cy="16" r="14.5" fill="none" stroke="rgba(72,151,243,0.28)" stroke-width="1.2"/>
+          <line x1="16" y1="4" x2="5" y2="24" stroke="rgba(72,151,243,0.28)" stroke-width="1"/>
+          <line x1="5" y1="24" x2="27" y2="24" stroke="rgba(72,151,243,0.28)" stroke-width="1"/>
+          <line x1="27" y1="24" x2="16" y2="4" stroke="rgba(72,151,243,0.28)" stroke-width="1"/>
+          <circle cx="16" cy="4" r="2.6" fill="rgba(127,179,239,0.92)"/>
+          <circle cx="5" cy="24" r="2.4" fill="rgba(127,179,239,0.88)"/>
+          <circle cx="27" cy="24" r="2.4" fill="rgba(127,179,239,0.88)"/>
+          <line x1="16" y1="6.6" x2="16" y2="10" stroke="rgba(127,179,239,0.82)" stroke-width="1.8" stroke-linecap="round"/>
+          <line x1="7.4" y1="21.6" x2="11" y2="18" stroke="rgba(127,179,239,0.82)" stroke-width="1.8" stroke-linecap="round"/>
+          <line x1="24.6" y1="21.6" x2="21" y2="18" stroke="rgba(127,179,239,0.82)" stroke-width="1.8" stroke-linecap="round"/>
+          <circle cx="16" cy="16" r="7" fill="none" stroke="rgba(127,179,239,0.26)" stroke-width="1.8"/>
+          <circle cx="16" cy="16" r="5" fill="#7FB3EF" stroke="#FFFFFF" stroke-width="1" stroke-opacity="0.5"/>
+        </svg>
+      </div>
+      <span class="header-logo-title">虚拟电厂智慧运营平台</span>
+    </div>
+    <nav class="header-nav">
+      <div class="header-nav-item" role="link" tabindex="0" onclick="location.href='index.html'">首页</div>
+      <div class="header-nav-item">基础管理</div>
+      <div class="header-nav-item active header-nav-dropdown" tabindex="0" aria-expanded="true">资源池管理
+        <div class="header-submenu">
+          <div class="header-submenu-item" role="link" tabindex="0" onclick="event.stopPropagation();location.href='resource-list.html'">资源管理</div>
+          <div class="header-submenu-item active" role="link" tabindex="0" onclick="event.stopPropagation();location.href='aggregation-management.html'">聚合管理</div>
+          <div class="header-submenu-item" role="link" tabindex="0" onclick="event.stopPropagation();location.href='resource-analysis.html'">资源分析</div>
+        </div>
+      </div>
+      <div class="header-nav-item header-nav-dropdown" tabindex="0">运行监测
+        <div class="header-submenu"><div class="header-submenu-item">历史数据查询</div><div class="header-submenu-item" onclick="location.href='control-command.html'">控制指令下发</div></div>
+      </div>
+      <div class="header-nav-item header-nav-dropdown" tabindex="0">协调控制
+        <div class="header-submenu"><div class="header-submenu-item">负荷预测</div><div class="header-submenu-item">方案管理</div><div class="header-submenu-item" onclick="location.href='optimization-decomposition.html'">优化分解</div><div class="header-submenu-item">分解下发审核</div><div class="header-submenu-item">响应方案管理监视</div></div>
+      </div>
+      <div class="header-nav-item">物联采集</div>
+      <div class="header-nav-item header-nav-dropdown" tabindex="0">系统管理
+        <div class="header-submenu"><div class="header-submenu-item" onclick="location.href='user-management.html'">用户管理</div><div class="header-submenu-item">角色管理</div><div class="header-submenu-item">权限管理</div></div>
+      </div>
+      <div class="header-nav-item">需求响应</div>
+      <div class="header-nav-item" onclick="location.href='filter-layout-examples.html'">更多</div>
+    </nav>
+  </div>
+  <div class="header-right">
+    <button class="nav-layout-toggle" id="navLayoutToggle" type="button" onclick="toggleNavLayout()" aria-label="切换菜单布局" title="切换菜单布局"><i class="fa-solid fa-table-columns"></i></button>
+    <button class="theme-toggle" id="themeToggle" type="button" onclick="toggleTheme()" aria-label="切换主题" title="切换主题"><i class="fa-solid fa-sun"></i></button>
+    <div class="header-avatar-wrapper" id="avatarBtn" onclick="toggleAvatar(event)">
+      <div class="header-avatar">GJ</div><i class="fa-solid fa-chevron-down header-avatar-arrow"></i>
+      <div class="dropdown-panel dropdown-panel--avatar" id="avatarPanel">
+        <div class="dropdown-option" onclick="event.stopPropagation();showToast('个人中心功能待接入','info')"><i class="fa-solid fa-user avatar-option-icon"></i>个人中心</div>
+        <div class="dropdown-divider"></div>
+        <div class="dropdown-option" onclick="event.stopPropagation();location.href='index.html'"><i class="fa-solid fa-right-from-bracket avatar-option-icon"></i>退出登录</div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main class="content aggregation-page">
+  <div class="breadcrumb">
+    <div class="breadcrumb-list">
+      <span class="breadcrumb-item"><i class="fa-solid fa-house" style="font-size:12px;"></i></span>
+      <span class="breadcrumb-separator"><i class="fa-solid fa-chevron-right"></i></span>
+      <span class="breadcrumb-item">资源池管理</span>
+      <span class="breadcrumb-separator"><i class="fa-solid fa-chevron-right"></i></span>
+      <span class="breadcrumb-item current">聚合管理</span>
+    </div>
+  </div>
+
+  <section class="filter-section" id="filterSection">
+    <div class="filter-header">
+      <span class="filter-title">筛选条件</span>
+      <button class="filter-toggle" id="filterToggle" type="button" aria-expanded="true" onclick="toggleFilter()"><i class="fa-solid fa-chevron-up"></i><span>收起</span></button>
+    </div>
+    <div class="filter-row" id="filterRow">
+      <div class="filter-grid" id="filterGrid">
+        <div class="filter-item">
+          <label class="filter-label" id="operatorLabel">所属运营商</label>
+          <div class="select-wrap" id="operatorSelect">
+            <div class="select-control filter-input" id="operatorTrigger" role="combobox" tabindex="0" aria-labelledby="operatorLabel" aria-expanded="false" aria-controls="operatorPanel" onclick="toggleOperator(event)" onkeydown="operatorKeydown(event)">
+              <span id="operatorValue">全部运营商</span><i class="fa-solid fa-chevron-down"></i>
+            </div>
+            <div class="select-panel" id="operatorPanel" role="listbox"></div>
+          </div>
+        </div>
+        <div class="filter-item">
+          <label class="filter-label" for="aggregationSearch">聚合名称</label>
+          <div class="filter-search"><input id="aggregationSearch" type="text" placeholder="请输入聚合名称" autocomplete="off"></div>
+        </div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn btn-primary btn-md" type="button" onclick="applyFilters()"><i class="fa-solid fa-magnifying-glass"></i>查询</button>
+        <button class="btn btn-ghost btn-md" type="button" onclick="resetFilters()"><i class="fa-solid fa-rotate-left"></i>重置</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="action-bar">
+    <span class="batch-count" id="batchCount" hidden>已选择 0 项</span>
+    <button class="btn btn-primary btn-sm" type="button" onclick="openAggregationModal()"><i class="fa-solid fa-plus"></i>新增</button>
+    <button class="btn btn-danger-outline btn-sm" id="deleteButton" type="button" onclick="openDeleteModal()" disabled><i class="fa-solid fa-trash-can"></i>删除</button>
+    <span class="action-divider" aria-hidden="true"></span>
+    <button class="btn btn-secondary btn-sm" type="button" onclick="exportAggregations()"><i class="fa-solid fa-download"></i>导出</button>
+  </div>
+  <div class="table-container">
+    <div class="table-scroll" id="tableWrap">
+      <table class="aggregation-table">
+        <thead>
+          <tr>
+            <th class="col-fixed-left col-fixed-checkbox"><div class="checkbox" id="headerCheckbox" role="checkbox" tabindex="0" aria-label="全选" onclick="toggleSelectAll()" onkeydown="checkboxKeydown(event,toggleSelectAll)"></div></th>
+            <th class="col-fixed-left col-fixed-name col-last-left-fixed">聚合名称</th>
+            <th>聚合类型</th><th>所属运营商</th><th class="num-header">资源数量</th><th class="num-header">聚合容量（kW）</th><th class="num-header">可调容量（kW）</th><th>电压等级</th><th>更新时间</th>
+            <th class="col-fixed-right col-fixed-ops col-first-right-fixed">操作</th>
+          </tr>
+        </thead>
+        <tbody id="aggregationTableBody"></tbody>
+      </table>
+    </div>
+    <div class="pagination">
+      <div class="pagination-left">
+        <span class="pagination-total" id="totalRecords">共 0 条记录</span>
+        <div class="page-size-select" id="pageSizeSelect"><span>每页</span><div class="page-size-trigger" tabindex="0" onclick="togglePageSize(event)"><span id="pageSizeValue">10条</span><i class="fa-solid fa-chevron-down"></i></div><div class="page-size-panel" id="pageSizePanel"><div class="page-size-option active" onclick="changePageSize(10)">10条</div><div class="page-size-option" onclick="changePageSize(20)">20条</div></div></div>
+      </div>
+      <div class="pagination-right"><div class="page-numbers" id="pageNumbers"></div><div class="page-jump"><span>跳至</span><input id="jumpInput" type="text" value="1" aria-label="跳转页码" onkeydown="handleJump(event)"><span>页</span></div></div>
+    </div>
+  </div>
+</main>
+
+<div class="aggregation-toast" id="toast" role="status" aria-live="polite"></div>
+
+<div class="modal-mask" id="aggregationModalMask" role="presentation">
+  <section class="aggregation-modal" role="dialog" aria-modal="true" aria-labelledby="aggregationModalTitle">
+    <div class="aggregation-modal-header"><h2 class="aggregation-modal-title" id="aggregationModalTitle">新增聚合</h2><button class="modal-close" type="button" aria-label="关闭" onclick="closeAggregationModal()"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="aggregation-modal-body">
+      <div class="aggregation-form-grid">
+        <div class="aggregation-form-field full"><label class="aggregation-form-label required" for="formAggregationName">聚合名称</label><input class="aggregation-input" id="formAggregationName" type="text" placeholder="请输入聚合名称"><div class="form-hint" id="nameHint"></div></div>
+        <div class="aggregation-form-field"><label class="aggregation-form-label required" id="formTypeLabel">聚合类型</label><div class="modal-select" id="formTypeSelect"><div class="modal-select-trigger placeholder" tabindex="0" aria-labelledby="formTypeLabel" aria-expanded="false" onclick="toggleModalSelect(event,'formTypeSelect')"><span id="formTypeValue">请选择聚合类型</span><i class="fa-solid fa-chevron-down"></i></div><div class="modal-select-panel"><div class="modal-select-option" onclick="chooseModalOption(event,'formTypeSelect','formTypeValue','混合型')">混合型</div><div class="modal-select-option" onclick="chooseModalOption(event,'formTypeSelect','formTypeValue','负荷型')">负荷型</div><div class="modal-select-option" onclick="chooseModalOption(event,'formTypeSelect','formTypeValue','电源型')">电源型</div></div></div><div class="form-hint" id="typeHint"></div></div>
+        <div class="aggregation-form-field"><label class="aggregation-form-label required" id="formOperatorLabel">所属运营商</label><div class="modal-select" id="formOperatorSelect"><div class="modal-select-trigger placeholder" tabindex="0" aria-labelledby="formOperatorLabel" aria-expanded="false" onclick="toggleModalSelect(event,'formOperatorSelect')"><span id="formOperatorValue">请选择所属运营商</span><i class="fa-solid fa-chevron-down"></i></div><div class="modal-select-panel"><div class="modal-select-option" onclick="chooseModalOption(event,'formOperatorSelect','formOperatorValue','国网江苏综合能源服务有限公司')">国网江苏综合能源服务有限公司</div><div class="modal-select-option" onclick="chooseModalOption(event,'formOperatorSelect','formOperatorValue','华东电力运营有限公司')">华东电力运营有限公司</div><div class="modal-select-option" onclick="chooseModalOption(event,'formOperatorSelect','formOperatorValue','南方电网综合能源有限公司')">南方电网综合能源有限公司</div></div></div><div class="form-hint" id="operatorHint"></div></div>
+        <div class="aggregation-form-field"><label class="aggregation-form-label">资源数量</label><input class="aggregation-input" id="formResourceCount" type="number" min="0" placeholder="请输入资源数量"></div>
+        <div class="aggregation-form-field"><label class="aggregation-form-label">聚合容量（kW）</label><input class="aggregation-input" id="formCapacity" type="number" min="0" step="0.01" placeholder="请输入聚合容量"></div>
+        <div class="aggregation-form-field"><label class="aggregation-form-label">可调容量（kW）</label><input class="aggregation-input" id="formAdjustable" type="number" min="0" step="0.01" placeholder="请输入可调容量"></div>
+        <div class="aggregation-form-field"><label class="aggregation-form-label">电压等级</label><input class="aggregation-input" id="formVoltage" type="text" placeholder="如 10kV"></div>
+      </div>
+    </div>
+    <div class="aggregation-modal-footer"><button class="btn btn-ghost btn-md" type="button" onclick="closeAggregationModal()">取消</button><button class="btn btn-primary btn-md" type="button" onclick="saveAggregation()">保存</button></div>
+  </section>
+</div>
+
+<div class="modal-mask" id="deleteModalMask" role="presentation">
+  <section class="aggregation-modal small" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+    <div class="aggregation-modal-header"><h2 class="aggregation-modal-title" id="deleteModalTitle">删除聚合</h2><button class="modal-close" type="button" aria-label="关闭" onclick="closeDeleteModal()"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="aggregation-modal-body"><p class="delete-message" id="deleteMessage"></p><p class="delete-warning"><i class="fa-solid fa-triangle-exclamation"></i> 删除后将无法恢复，请确认操作。</p></div>
+    <div class="aggregation-modal-footer"><button class="btn btn-ghost btn-md" type="button" onclick="closeDeleteModal()">取消</button><button class="btn btn-danger-outline btn-md" type="button" onclick="confirmDelete()">确认删除</button></div>
+  </section>
+</div>
+
+<div class="modal-mask" id="topologyModalMask" role="presentation">
+  <section class="aggregation-modal" role="dialog" aria-modal="true" aria-labelledby="topologyModalTitle">
+    <div class="aggregation-modal-header"><h2 class="aggregation-modal-title" id="topologyModalTitle">查看拓扑图</h2><button class="modal-close" type="button" aria-label="关闭" onclick="closeTopologyModal()"><i class="fa-solid fa-xmark"></i></button></div>
+    <div class="aggregation-modal-body"><p class="topology-summary" id="topologySummary"></p><div class="topology-canvas"><svg viewBox="0 0 600 280" role="img" aria-label="聚合拓扑图"><line class="topology-line" x1="300" y1="76" x2="150" y2="180"></line><line class="topology-line" x1="300" y1="76" x2="300" y2="190"></line><line class="topology-line" x1="300" y1="76" x2="450" y2="180"></line><circle class="topology-node core" cx="300" cy="60" r="34"></circle><text class="topology-label" x="300" y="64">聚合</text><circle class="topology-node" cx="150" cy="190" r="28"></circle><text class="topology-label" x="150" y="194">负荷</text><circle class="topology-node" cx="300" cy="200" r="28"></circle><text class="topology-label" x="300" y="204">储能</text><circle class="topology-node" cx="450" cy="190" r="28"></circle><text class="topology-label" x="450" y="194">光伏</text></svg></div></div>
+    <div class="aggregation-modal-footer"><button class="btn btn-primary btn-md" type="button" onclick="closeTopologyModal()">关闭</button></div>
+  </section>
+</div>
+
+<script src="shared-table-interactions.js"></script>
+<script>
+const operators = ['全部运营商', '国网江苏综合能源服务有限公司', '华东电力运营有限公司', '南方电网综合能源有限公司'];
+const aggregations = [
+  { id: 1, name: '华东园区柔性负荷聚合1号', type: '负荷型', operator: '国网江苏综合能源服务有限公司', resources: 42, capacity: 1280, adjustable: 896, voltage: '10kV', updated: '2026-09-18 14:32' },
+  { id: 2, name: '苏州工业园区储能聚合站', type: '电源型', operator: '华东电力运营有限公司', resources: 18, capacity: 2400, adjustable: 2160, voltage: '35kV', updated: '2026-09-17 10:16' },
+  { id: 3, name: '杭州余杭光伏协同聚合', type: '电源型', operator: '南方电网综合能源有限公司', resources: 36, capacity: 3560, adjustable: 1120, voltage: '10kV', updated: '2026-09-16 16:48' },
+  { id: 4, name: '南京江北综合能源聚合体', type: '混合型', operator: '国网江苏综合能源服务有限公司', resources: 64, capacity: 4820, adjustable: 2780, voltage: '110kV', updated: '2026-09-15 09:25' },
+  { id: 5, name: '无锡新吴商业负荷聚合', type: '负荷型', operator: '华东电力运营有限公司', resources: 29, capacity: 960, adjustable: 640, voltage: '10kV', updated: '2026-09-14 14:05' },
+  { id: 6, name: '常州武进储能协同聚合', type: '电源型', operator: '国网江苏综合能源服务有限公司', resources: 12, capacity: 1800, adjustable: 1620, voltage: '35kV', updated: '2026-09-13 11:37' },
+  { id: 7, name: '宁波北仑工业园区聚合', type: '混合型', operator: '华东电力运营有限公司', resources: 51, capacity: 3180, adjustable: 1870, voltage: '110kV', updated: '2026-09-12 17:20' },
+  { id: 8, name: '嘉兴秀洲分布式光伏聚合', type: '电源型', operator: '南方电网综合能源有限公司', resources: 47, capacity: 4260, adjustable: 1340, voltage: '10kV', updated: '2026-09-11 08:55' },
+  { id: 9, name: '镇江丹徒充换电负荷聚合', type: '负荷型', operator: '国网江苏综合能源服务有限公司', resources: 23, capacity: 780, adjustable: 520, voltage: '10kV', updated: '2026-09-10 15:12' },
+  { id: 10, name: '合肥滨湖园区综合聚合', type: '混合型', operator: '华东电力运营有限公司', resources: 58, capacity: 5240, adjustable: 3010, voltage: '110kV', updated: '2026-09-09 13:41' },
+  { id: 11, name: '扬州广陵储能聚合单元', type: '电源型', operator: '国网江苏综合能源服务有限公司', resources: 16, capacity: 2200, adjustable: 1980, voltage: '35kV', updated: '2026-09-08 10:28' },
+  { id: 12, name: '南通海门新能源聚合', type: '电源型', operator: '南方电网综合能源有限公司', resources: 31, capacity: 2940, adjustable: 980, voltage: '10kV', updated: '2026-09-07 16:03' }
+];
+let operatorFilter = '全部运营商';
+let appliedSearch = '';
+let currentPage = 1;
+let pageSize = 10;
+let selectedIds = new Set();
+let editingId = null;
+let toastTimer;
+
+function escapeHtml(value) { return String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char])); }
+function typeClass(type) { return type === '负荷型' ? 'load' : type === '电源型' ? 'power' : type === '混合型' ? 'mixed' : ''; }
+function filteredRows() { return aggregations.filter(row => (!operatorFilter || operatorFilter === '全部运营商' || row.operator === operatorFilter) && (!appliedSearch || row.name.includes(appliedSearch))); }
+
+function renderTable() {
+  const rows = filteredRows();
+  const pages = Math.max(1, Math.ceil(rows.length / pageSize));
+  currentPage = Math.min(currentPage, pages);
+  const visible = rows.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  document.getElementById('aggregationTableBody').innerHTML = visible.length ? visible.map(row => `<tr class="${selectedIds.has(row.id) ? 'selected' : ''}">
+    <td class="col-fixed-left col-fixed-checkbox"><div class="checkbox ${selectedIds.has(row.id) ? 'checked' : ''}" role="checkbox" tabindex="0" aria-checked="${selectedIds.has(row.id)}" aria-label="选择 ${escapeHtml(row.name)}" onclick="toggleRow(${row.id})" onkeydown="checkboxKeydown(event,() => toggleRow(${row.id}))"></div></td>
+    <td class="col-fixed-left col-fixed-name col-last-left-fixed" title="${escapeHtml(row.name)}"><span class="aggregation-name">${escapeHtml(row.name)}</span></td>
+    <td><span class="aggregation-type ${typeClass(row.type)}">${escapeHtml(row.type)}</span></td>
+    <td title="${escapeHtml(row.operator)}">${escapeHtml(row.operator)}</td>
+    <td class="num">${row.resources}</td><td class="num">${row.capacity.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}</td><td class="num">${row.adjustable.toLocaleString('zh-CN', { minimumFractionDigits: 2 })}</td>
+    <td>${escapeHtml(row.voltage)}</td><td class="date">${escapeHtml(row.updated)}</td>
+    <td class="col-fixed-right col-fixed-ops col-first-right-fixed"><div class="action-links"><button class="action-link" type="button" onclick="openEditModal(${row.id})">编辑</button><span class="action-separator"></span><button class="action-link" type="button" onclick="openTopologyModal(${row.id})">查看拓扑图</button></div></td>
+  </tr>`).join('') : '<tr><td class="empty-cell" colspan="10">暂无匹配的聚合数据</td></tr>';
+  document.getElementById('totalRecords').textContent = `共 ${rows.length} 条记录`;
+  document.getElementById('jumpInput').value = currentPage;
+  renderPages(pages);
+  updateSelectionState(visible);
+}
+
+function renderPages(totalPages) {
+  const items = [];
+  items.push(`<button class="page-btn ${currentPage === 1 ? 'disabled' : ''}" type="button" ${currentPage === 1 ? 'disabled' : ''} onclick="goToPage(${currentPage - 1})" aria-label="上一页"><i class="fa-solid fa-chevron-left"></i></button>`);
+  for (let page = 1; page <= totalPages; page += 1) {
+    if (totalPages > 7 && page > 3 && page < totalPages - 1 && Math.abs(page - currentPage) > 1) {
+      if (items[items.length - 1] !== '<span class="page-ellipsis">...</span>') items.push('<span class="page-ellipsis">...</span>');
+      continue;
+    }
+    items.push(`<button class="page-btn ${page === currentPage ? 'active' : ''}" type="button" onclick="goToPage(${page})" aria-current="${page === currentPage ? 'page' : 'false'}">${page}</button>`);
+  }
+  items.push(`<button class="page-btn ${currentPage === totalPages ? 'disabled' : ''}" type="button" ${currentPage === totalPages ? 'disabled' : ''} onclick="goToPage(${currentPage + 1})" aria-label="下一页"><i class="fa-solid fa-chevron-right"></i></button>`);
+  document.getElementById('pageNumbers').innerHTML = items.join('');
+}
+
+function updateSelectionState(visibleRows) {
+  const visibleIds = visibleRows.map(row => row.id);
+  const selectedVisible = visibleIds.filter(id => selectedIds.has(id)).length;
+  const header = document.getElementById('headerCheckbox');
+  header.classList.toggle('checked', visibleIds.length > 0 && selectedVisible === visibleIds.length);
+  header.classList.toggle('indeterminate', selectedVisible > 0 && selectedVisible < visibleIds.length);
+  header.setAttribute('aria-checked', selectedVisible === 0 ? 'false' : selectedVisible === visibleIds.length ? 'true' : 'mixed');
+  const count = document.getElementById('batchCount');
+  count.textContent = `已选择 ${selectedIds.size} 项`;
+  count.hidden = selectedIds.size === 0;
+  document.getElementById('deleteButton').disabled = selectedIds.size === 0;
+}
+
+function toggleRow(id) { selectedIds.has(id) ? selectedIds.delete(id) : selectedIds.add(id); renderTable(); }
+function toggleSelectAll() {
+  const visibleRows = filteredRows().slice((currentPage - 1) * pageSize, currentPage * pageSize);
+  const allSelected = visibleRows.length > 0 && visibleRows.every(row => selectedIds.has(row.id));
+  visibleRows.forEach(row => allSelected ? selectedIds.delete(row.id) : selectedIds.add(row.id));
+  renderTable();
+}
+function checkboxKeydown(event, action) { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); action(); } }
+
+function renderOperatorOptions() {
+  document.getElementById('operatorPanel').innerHTML = operators.map(operator => `<div class="select-option ${operator === operatorFilter ? 'active' : ''}" role="option" aria-selected="${operator === operatorFilter}" onclick="chooseOperator(event,'${escapeHtml(operator)}')">${escapeHtml(operator)}</div>`).join('');
+}
+function toggleOperator(event) { event.stopPropagation(); closeFloatingPanels('operatorSelect'); document.getElementById('operatorSelect').classList.toggle('open'); document.getElementById('operatorTrigger').setAttribute('aria-expanded', String(document.getElementById('operatorSelect').classList.contains('open'))); }
+function chooseOperator(event, operator) { event.stopPropagation(); operatorFilter = operator; document.getElementById('operatorValue').textContent = operator; document.getElementById('operatorSelect').classList.remove('open'); document.getElementById('operatorTrigger').setAttribute('aria-expanded', 'false'); renderOperatorOptions(); }
+function operatorKeydown(event) { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); toggleOperator(event); } }
+function applyFilters() { appliedSearch = document.getElementById('aggregationSearch').value.trim(); currentPage = 1; renderTable(); }
+function resetFilters() { operatorFilter = '全部运营商'; appliedSearch = ''; document.getElementById('operatorValue').textContent = operatorFilter; document.getElementById('aggregationSearch').value = ''; currentPage = 1; renderOperatorOptions(); renderTable(); }
+function toggleFilter() { const section = document.getElementById('filterSection'); const collapsed = section.classList.toggle('is-collapsed'); const button = document.getElementById('filterToggle'); button.setAttribute('aria-expanded', String(!collapsed)); button.querySelector('span').textContent = collapsed ? '展开' : '收起'; button.querySelector('i').className = `fa-solid fa-chevron-${collapsed ? 'down' : 'up'}`; }
+
+function togglePageSize(event) { event.stopPropagation(); document.getElementById('pageSizeSelect').classList.toggle('open'); }
+function changePageSize(size) { pageSize = size; currentPage = 1; document.getElementById('pageSizeValue').textContent = `${size}条`; document.querySelectorAll('.page-size-option').forEach(option => option.classList.toggle('active', option.textContent === `${size}条`)); document.getElementById('pageSizeSelect').classList.remove('open'); renderTable(); }
+function goToPage(page) { const totalPages = Math.max(1, Math.ceil(filteredRows().length / pageSize)); if (page < 1 || page > totalPages) return; currentPage = page; renderTable(); }
+function handleJump(event) { if (event.key !== 'Enter') return; const target = Number(event.target.value); if (Number.isInteger(target)) goToPage(target); else event.target.value = currentPage; }
+
+function toggleModalSelect(event, id) { event.stopPropagation(); closeFloatingPanels(id); document.getElementById(id).classList.toggle('open'); }
+function chooseModalOption(event, id, valueId, value) { event.stopPropagation(); const select = document.getElementById(id); const trigger = select.querySelector('.modal-select-trigger'); document.getElementById(valueId).textContent = value; trigger.classList.remove('placeholder'); select.querySelectorAll('.modal-select-option').forEach(option => option.classList.toggle('active', option.textContent === value)); select.classList.remove('open'); }
+function resetModalForm(row) {
+  editingId = row ? row.id : null;
+  document.getElementById('aggregationModalTitle').textContent = row ? '编辑聚合' : '新增聚合';
+  document.getElementById('formAggregationName').value = row ? row.name : '';
+  document.getElementById('formResourceCount').value = row ? row.resources : '';
+  document.getElementById('formCapacity').value = row ? row.capacity : '';
+  document.getElementById('formAdjustable').value = row ? row.adjustable : '';
+  document.getElementById('formVoltage').value = row ? row.voltage : '';
+  setModalValue('formTypeSelect', 'formTypeValue', row ? row.type : '请选择聚合类型');
+  setModalValue('formOperatorSelect', 'formOperatorValue', row ? row.operator : '请选择所属运营商');
+  ['nameHint','typeHint','operatorHint'].forEach(id => { document.getElementById(id).textContent = ''; });
+}
+function setModalValue(selectId, valueId, value) { const select = document.getElementById(selectId); const trigger = select.querySelector('.modal-select-trigger'); const placeholder = value.startsWith('请选择'); document.getElementById(valueId).textContent = value; trigger.classList.toggle('placeholder', placeholder); select.querySelectorAll('.modal-select-option').forEach(option => option.classList.toggle('active', option.textContent === value)); }
+function openAggregationModal(id) { const row = id ? aggregations.find(item => item.id === id) : null; resetModalForm(row); document.getElementById('aggregationModalMask').classList.add('open'); document.getElementById('formAggregationName').focus(); }
+function openEditModal(id) { openAggregationModal(id); }
+function closeAggregationModal() { document.getElementById('aggregationModalMask').classList.remove('open'); closeFloatingPanels(); }
+function saveAggregation() {
+  const name = document.getElementById('formAggregationName').value.trim();
+  const type = document.getElementById('formTypeValue').textContent;
+  const operator = document.getElementById('formOperatorValue').textContent;
+  let valid = true;
+  document.getElementById('nameHint').textContent = name ? '' : '请输入聚合名称'; valid = valid && Boolean(name);
+  document.getElementById('typeHint').textContent = type.startsWith('请选择') ? '请选择聚合类型' : ''; valid = valid && !type.startsWith('请选择');
+  document.getElementById('operatorHint').textContent = operator.startsWith('请选择') ? '请选择所属运营商' : ''; valid = valid && !operator.startsWith('请选择');
+  if (!valid) return;
+  const payload = { name, type, operator, resources: Number(document.getElementById('formResourceCount').value) || 0, capacity: Number(document.getElementById('formCapacity').value) || 0, adjustable: Number(document.getElementById('formAdjustable').value) || 0, voltage: document.getElementById('formVoltage').value.trim() || '-', updated: new Date().toLocaleString('zh-CN', { hour12: false }).replaceAll('/', '-') };
+  if (editingId) Object.assign(aggregations.find(item => item.id === editingId), payload); else aggregations.unshift({ id: Date.now(), ...payload });
+  closeAggregationModal(); currentPage = 1; renderTable(); showToast(editingId ? '聚合信息已更新' : '聚合已新增', 'success');
+}
+
+function openDeleteModal() { if (!selectedIds.size) return; document.getElementById('deleteMessage').textContent = `已选择 ${selectedIds.size} 个聚合，确认删除吗？`; document.getElementById('deleteModalMask').classList.add('open'); }
+function closeDeleteModal() { document.getElementById('deleteModalMask').classList.remove('open'); }
+function confirmDelete() { const count = selectedIds.size; for (let index = aggregations.length - 1; index >= 0; index -= 1) if (selectedIds.has(aggregations[index].id)) aggregations.splice(index, 1); selectedIds.clear(); closeDeleteModal(); renderTable(); showToast(`已删除 ${count} 个聚合`, 'success'); }
+
+function openTopologyModal(id) { const row = aggregations.find(item => item.id === id); if (!row) return; document.getElementById('topologyModalTitle').textContent = `${row.name} - 拓扑图`; document.getElementById('topologySummary').textContent = `${row.operator} · ${row.resources} 个资源 · 聚合容量 ${row.capacity.toLocaleString('zh-CN')} kW`; document.getElementById('topologyModalMask').classList.add('open'); }
+function closeTopologyModal() { document.getElementById('topologyModalMask').classList.remove('open'); }
+
+function exportAggregations() { const rows = filteredRows(); const header = ['聚合名称','聚合类型','所属运营商','资源数量','聚合容量（kW）','可调容量（kW）','电压等级','更新时间']; const csv = [header, ...rows.map(row => [row.name,row.type,row.operator,row.resources,row.capacity,row.adjustable,row.voltage,row.updated])].map(row => row.map(value => `"${String(value).replaceAll('"','""')}"`).join(',')).join('\n'); const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' }); const link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = '聚合管理.csv'; link.click(); URL.revokeObjectURL(link.href); showToast(`已导出 ${rows.length} 条聚合数据`, 'success'); }
+function showToast(message) { const toast = document.getElementById('toast'); toast.textContent = message; toast.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove('show'), 2200); }
+function closeFloatingPanels(except) { document.querySelectorAll('.select-wrap.open,.page-size-select.open,.modal-select.open').forEach(panel => { if (panel.id !== except) panel.classList.remove('open'); }); }
+
+function toggleAvatar(event) { event.stopPropagation(); closeFloatingPanels(); document.getElementById('avatarBtn').classList.toggle('open'); document.getElementById('avatarPanel').classList.toggle('show'); }
+function updateThemeToggle() { const light = document.documentElement.dataset.theme === 'light'; const button = document.getElementById('themeToggle'); button.querySelector('i').className = `fa-solid fa-${light ? 'moon' : 'sun'}`; button.setAttribute('aria-label', light ? '切换为深色主题' : '切换为浅色主题'); button.title = button.getAttribute('aria-label'); }
+function toggleTheme() { const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light'; document.documentElement.dataset.theme = next; try { localStorage.setItem('vpp-theme', next); } catch (e) {} updateThemeToggle(); }
+function toggleNavLayout() { const next = document.documentElement.dataset.navLayout === 'side' ? 'top' : 'side'; document.documentElement.dataset.navLayout = next; try { localStorage.setItem('vpp-nav-layout', next); } catch (e) {} }
+document.addEventListener('click', () => { closeFloatingPanels(); document.getElementById('avatarBtn').classList.remove('open'); document.getElementById('avatarPanel').classList.remove('show'); });
+document.addEventListener('keydown', event => { if (event.key !== 'Escape') return; if (document.getElementById('topologyModalMask').classList.contains('open')) closeTopologyModal(); else if (document.getElementById('deleteModalMask').classList.contains('open')) closeDeleteModal(); else if (document.getElementById('aggregationModalMask').classList.contains('open')) closeAggregationModal(); });
+document.getElementById('aggregationSearch').addEventListener('keydown', event => { if (event.key === 'Enter') applyFilters(); });
+renderOperatorOptions(); updateThemeToggle(); renderTable();
+</script>
+</body>
+</html>

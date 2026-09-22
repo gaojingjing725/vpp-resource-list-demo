@@ -10,7 +10,6 @@ try {
 } catch (e) {}
 </script>
 <link rel="stylesheet" href="shared-theme.css">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <style>
 :root {
   --space-1: 4px;
@@ -43,6 +42,8 @@ body {
   min-width: 320px;
   font-family: var(--font-sans);
   color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   background:
     radial-gradient(circle at 18% 18%, rgba(0, 212, 255, 0.16), transparent 30%),
     radial-gradient(circle at 82% 22%, rgba(23, 118, 229, 0.18), transparent 34%),
@@ -344,12 +345,19 @@ button {
   position: absolute;
   top: 50%;
   left: 14px;
+  width: 16px;
+  height: 16px;
   color: var(--text-muted);
-  font-size: 16px;
-  line-height: 1;
   pointer-events: none;
   transform: translateY(-50%);
   transition: color 150ms ease;
+}
+
+.ui-icon {
+  display: block;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
 }
 
 .input-wrap:focus-within .input-icon {
@@ -607,7 +615,7 @@ button {
 </head>
 <body>
 <button class="theme-toggle" id="themeToggle" type="button" aria-label="切换页面主题" title="切换页面主题">
-  <i class="fa-solid fa-sun" aria-hidden="true"></i>
+  <svg class="ui-icon" aria-hidden="true"><use href="icon/login-icons.svg#sun"></use></svg>
 </button>
 
 <main class="login-page">
@@ -637,7 +645,7 @@ button {
         <div class="form-row">
           <label class="form-label" for="account">账号</label>
           <div class="input-wrap">
-            <i class="fa-regular fa-user input-icon" aria-hidden="true"></i>
+            <svg class="input-icon" aria-hidden="true"><use href="icon/login-icons.svg#user"></use></svg>
             <input class="form-input has-icon" id="account" name="account" type="text" autocomplete="username" placeholder="请输入账号">
           </div>
           <div class="form-error" id="accountError" aria-live="polite"></div>
@@ -646,10 +654,10 @@ button {
         <div class="form-row">
           <label class="form-label" for="password">密码</label>
           <div class="input-wrap">
-            <i class="fa-solid fa-lock input-icon" aria-hidden="true"></i>
+            <svg class="input-icon" aria-hidden="true"><use href="icon/login-icons.svg#lock"></use></svg>
             <input class="form-input has-icon has-toggle" id="password" name="password" type="password" autocomplete="current-password" placeholder="请输入密码">
             <button class="password-toggle" id="passwordToggle" type="button" aria-label="显示密码" title="显示密码">
-              <i class="fa-solid fa-eye" aria-hidden="true"></i>
+              <svg class="ui-icon" aria-hidden="true"><use href="icon/login-icons.svg#eye"></use></svg>
             </button>
           </div>
           <div class="form-error" id="passwordError" aria-live="polite"></div>
@@ -657,7 +665,7 @@ button {
 
         <div class="login-actions">
           <button class="btn btn-primary btn-md" id="loginButton" type="submit">
-            <i class="fa-solid fa-arrow-right-to-bracket" aria-hidden="true"></i>
+            <svg class="ui-icon" aria-hidden="true"><use href="icon/login-icons.svg#login"></use></svg>
             <span>登录</span>
           </button>
           <div class="login-status" id="loginStatus" role="status" aria-live="polite"></div>
@@ -682,7 +690,7 @@ const themeToggle = document.getElementById('themeToggle');
 
 function updateThemeButton() {
   const light = root.dataset.theme === 'light';
-  themeToggle.innerHTML = '<i class="fa-solid fa-' + (light ? 'moon' : 'sun') + '" aria-hidden="true"></i>';
+  themeToggle.innerHTML = '<svg class="ui-icon" aria-hidden="true"><use href="icon/login-icons.svg#' + (light ? 'moon' : 'sun') + '"></use></svg>';
   themeToggle.setAttribute('aria-label', light ? '切换为深色主题' : '切换为浅色主题');
   themeToggle.title = light ? '切换为深色主题' : '切换为浅色主题';
 }
@@ -718,7 +726,7 @@ function validateForm() {
 passwordToggle.addEventListener('click', () => {
   const visible = passwordInput.type === 'text';
   passwordInput.type = visible ? 'password' : 'text';
-  passwordToggle.innerHTML = '<i class="fa-solid fa-' + (visible ? 'eye' : 'eye-slash') + '" aria-hidden="true"></i>';
+  passwordToggle.innerHTML = '<svg class="ui-icon" aria-hidden="true"><use href="icon/login-icons.svg#' + (visible ? 'eye' : 'eye-slash') + '"></use></svg>';
   passwordToggle.setAttribute('aria-label', visible ? '显示密码' : '隐藏密码');
   passwordToggle.title = visible ? '显示密码' : '隐藏密码';
 });

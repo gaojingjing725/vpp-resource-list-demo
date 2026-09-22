@@ -674,7 +674,7 @@ tbody td {
   display: flex;
   align-items: center;
   padding: 0;
-  margin: calc(var(--content-py) * -1) 0 var(--space-4);
+  margin: 0 0 var(--space-4);
 }
 
 .breadcrumb-list {
@@ -717,7 +717,7 @@ tbody td {
   left: 0;
   right: 0;
   bottom: 0;
-  padding: var(--content-py) var(--content-px);
+  padding: 0 var(--content-px) var(--content-py);
   overflow-y: auto;
 }
 
@@ -1086,13 +1086,21 @@ table {
   table-layout: auto;
 }
 
+thead tr,
+tbody tr {
+  height: 48px;
+}
+
 thead th {
   background: var(--fixed-bg-header);
+  height: 48px;
   font-size: 14px;
   font-weight: 500;
+  line-height: 22px;
   color: var(--text-primary);
   text-align: left;
-  padding: 12px 16px;
+  padding: 0 16px;
+  vertical-align: middle;
   border-bottom: 1px solid var(--border-divider);
   white-space: nowrap;
   position: sticky;
@@ -1119,10 +1127,13 @@ th.sortable.desc .sort-icon {
 }
 
 tbody td {
+  height: 48px;
   font-size: 14px;
   font-weight: 400;
   color: var(--text-secondary);
-  padding: 12px 16px;
+  line-height: 22px;
+  padding: 0 16px;
+  vertical-align: middle;
   border-bottom: 1px solid var(--border-subtle);
   white-space: nowrap;
 }
@@ -2907,7 +2918,7 @@ function handleAvatarAction(action) {
   if (action === 'profile') {
     showToast('跳转至个人中心', 'info');
   } else if (action === 'logout') {
-    showToast('已退出登录', 'info');
+    window.location.href = 'index.html';
   }
 }
 
@@ -3771,4 +3782,5 @@ updateNavLayoutToggle(document.documentElement.dataset.navLayout || 'top');
 <script src="shared-table-interactions.js"></script>
 
 </body>
+<script>document.querySelectorAll('.header-submenu-item').forEach(function(item){if(item.textContent.trim()==='聚合管理'){item.setAttribute('role','link');item.setAttribute('tabindex','0');item.addEventListener('click',function(){window.location.href='aggregation-management.html'});item.addEventListener('keydown',function(event){if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='aggregation-management.html'}})}});</script>
 </html>
