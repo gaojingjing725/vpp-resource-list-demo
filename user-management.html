@@ -32,5 +32,6 @@ function toggleAvatar(event){event.stopPropagation();avatarBtn.classList.toggle(
 document.documentElement.dataset.theme=localStorage.getItem('vpp-theme')||'dark';document.documentElement.dataset.navLayout=localStorage.getItem('vpp-nav-layout')||'top';renderTree();renderUsers();updateNavButtons();
 </script><script src="shared-table-interactions.js"></script>
 </body>
+<script src="shared-basic-management.js"></script>
 <script>document.querySelectorAll('.header-submenu-item').forEach(function(item){if(item.textContent.trim()==='聚合管理'){item.setAttribute('role','link');item.setAttribute('tabindex','0');item.addEventListener('click',function(){window.location.href='aggregation-management.html'});item.addEventListener('keydown',function(event){if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='aggregation-management.html'}})}});</script>
 </html>
