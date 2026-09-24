@@ -215,4 +215,5 @@ let chartResizeTimer;window.addEventListener('resize',()=>{clearTimeout(chartRes
 </script>
 </body>
 <script>document.querySelectorAll('.header-submenu-item').forEach(function(item){if(item.textContent.trim()==='聚合管理'){item.setAttribute('role','link');item.setAttribute('tabindex','0');item.addEventListener('click',function(){window.location.href='aggregation-management.html'});item.addEventListener('keydown',function(event){if(event.key==='Enter'||event.key===' '){event.preventDefault();window.location.href='aggregation-management.html'}})}});</script>
+<script src="shared-basic-management.js"></script>
 </html>
