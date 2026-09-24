@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark" data-nav-layout="top">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>运营商管理 - 虚拟电厂智慧运营平台</title>
+<script>
+try {
+  document.documentElement.dataset.theme = localStorage.getItem('vpp-theme') || 'dark';
+  document.documentElement.dataset.navLayout = localStorage.getItem('vpp-nav-layout') || 'top';
+} catch (e) {}
+</script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<link rel="stylesheet" href="shared-navigation.css?v=20260827-3">
+<link rel="stylesheet" href="shared-list-components.css?v=20260821-6">
+<link rel="stylesheet" href="shared-primary-menu-active.css">
+<link rel="stylesheet" href="shared-theme.css">
+<link rel="stylesheet" href="shared-page-shell.css">
+<style>
+:root{--content-px:24px;--content-py:24px;--breadcrumb-h:40px;--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-6:24px;--radius-sm:6px;--radius-md:8px;--radius-lg:12px;--radius-xl:16px;--font-mono:"SF Mono","Fira Code","JetBrains Mono",Consolas,monospace;--red-700:#C03838;--z-modal:1300;--z-modal-mask:1299;--z-toast:1400}
+html,body{height:100%;min-width:320px;margin:0;overflow:hidden;font-family:var(--font-sans);font-size:14px;color:var(--text-primary);background:var(--page-bg);-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale}
+*{box-sizing:border-box}
+.operator-page{min-width:0}
+.operator-page>.action-bar{display:flex;align-items:center;gap:var(--space-2);min-height:30px;margin-bottom:var(--space-2)}
+.operator-page>.action-bar .action-divider{width:1px;height:20px;margin:0 var(--space-2);background:var(--border-divider)}
+.operator-table-container{overflow:hidden}
+.operator-table{width:100%;min-width:1480px;border-collapse:collapse;table-layout:auto}
+.operator-table thead tr,.operator-table tbody tr{height:48px}
+.operator-table th{height:48px;padding:0 16px;position:sticky;top:0;z-index:2;vertical-align:middle;background:var(--table-head-bg);color:var(--text-primary);font:500 14px/22px var(--font-sans);text-align:left;white-space:nowrap;border-bottom:1px solid var(--border-divider)}
+.operator-table th.sortable{cursor:pointer;user-select:none}
+.operator-table th.sortable:hover{color:var(--primary-400)}
+.operator-table th.sortable .sort-icon{margin-left:4px;font-size:12px;color:var(--text-disabled);transition:color 150ms ease}
+.operator-table th.sortable.asc .sort-icon,.operator-table th.sortable.desc .sort-icon{color:var(--primary-400)}
+.operator-table td{height:48px;padding:0 16px;position:relative;vertical-align:middle;background:var(--card-bg);color:var(--text-secondary);font:400 14px/22px var(--font-sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-bottom:1px solid var(--border-divider)}
+.operator-table tbody tr:hover td{background:var(--hover-bg)}
+.operator-table tbody tr.selected td,.operator-table tbody tr.selected:hover td{background:rgba(23,118,229,.10)}
+.operator-table tbody tr:last-child td{border-bottom:0}
+.operator-table .num-header,.operator-table .num{text-align:right}
+.operator-table th.col-fixed-checkbox,.operator-table td.col-fixed-checkbox{width:48px;min-width:48px;text-align:center}
+.operator-table th.col-fixed-name,.operator-table td.col-fixed-name{width:180px;min-width:180px}
+.operator-table th.col-fixed-right,.operator-table td.col-fixed-right{width:100px;min-width:100px}
+.operator-table th.col-fixed-left,.operator-table td.col-fixed-left{position:sticky;left:0;z-index:1;background:var(--card-bg)}
+.operator-table th.col-fixed-name,.operator-table td.col-fixed-name{position:sticky;left:48px;z-index:1;min-width:180px;background:var(--card-bg)}
+.operator-table thead th.col-fixed-left,.operator-table thead th.col-fixed-name,.operator-table thead th.col-fixed-right{z-index:3;background:var(--table-head-bg)}
+.operator-table th.col-fixed-right,.operator-table td.col-fixed-right{position:sticky;right:0;z-index:1;min-width:100px;background:var(--card-bg)}
+.operator-table td.col-last-left-fixed,.operator-table td.col-first-right-fixed{overflow:visible}
+.operator-table tbody tr:hover td.col-fixed-left,.operator-table tbody tr:hover td.col-fixed-name,.operator-table tbody tr:hover td.col-fixed-right{background:var(--hover-bg)}
+.operator-table tbody tr.selected td.col-fixed-left,.operator-table tbody tr.selected td.col-fixed-name,.operator-table tbody tr.selected td.col-fixed-right{background:rgba(23,118,229,.10)}
+.operator-table .num{text-align:right;font-family:var(--font-mono)}
+.operator-table .date{color:var(--text-secondary)}
+.operator-table .contact{max-width:130px;overflow:hidden;text-overflow:ellipsis}
+.operator-table .operator-name{color:var(--text-primary);font-weight:400}
+.checkbox{width:16px;height:16px;display:inline-flex;align-items:center;justify-content:center;border:1.5px solid var(--border-hover);border-radius:4px;background:transparent;cursor:pointer;transition:all 150ms ease}
+.checkbox:hover{border-color:var(--primary-400)}
+.checkbox.checked,.checkbox.indeterminate{border-color:var(--primary-500);background:var(--primary-500)}
+.checkbox.checked::after{content:"";width:5px;height:9px;border:solid #FFF;border-width:0 2px 2px 0;transform:rotate(45deg);margin-bottom:2px}
+.checkbox.indeterminate::after{content:"";width:8px;height:2px;border-radius:1px;background:#FFF}
+.action-link{padding:0;border:0;background:transparent;color:var(--primary-400);font:400 14px/22px var(--font-sans);cursor:pointer}
+.action-link:hover{color:var(--primary-300)}
+.action-link:focus-visible,.checkbox:focus-visible{outline:2px solid var(--primary-400);outline-offset:2px}
+.operator-modal-mask{display:none;position:fixed;inset:0;z-index:var(--z-modal-mask);align-items:center;justify-content:center;padding:24px;background:rgba(0,0,0,.60)}
+.operator-modal-mask.open{display:flex}
+.operator-modal{width:min(640px,100%);max-height:90vh;display:flex;flex-direction:column;background:var(--card-bg);border:1px solid rgba(22,104,220,.15);border-radius:var(--radius-xl);box-shadow:0 24px 64px rgba(0,0,0,.50);z-index:var(--z-modal);overflow:hidden}
+.operator-modal.small{width:min(480px,100%)}
+.operator-modal-header{min-height:58px;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border-divider)}
+.operator-modal-title{margin:0;color:var(--text-primary);font-size:18px;font-weight:600;line-height:26px}.modal-close{width:32px;height:32px;padding:0;border:0;border-radius:var(--radius-sm);background:transparent;color:var(--text-muted);cursor:pointer}.modal-close:hover{color:var(--text-primary);background:var(--hover-bg)}
+.operator-modal-body{max-height:480px;padding:24px;overflow-y:auto;flex-shrink:0;color:var(--text-secondary);font:400 14px/22px var(--font-sans)}
+.operator-form{max-height:480px;padding:24px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;overflow-y:auto;flex-shrink:0}.operator-field.full{grid-column:1/-1}.operator-field label{display:block;margin-bottom:6px;color:var(--text-secondary);font-size:14px;line-height:22px}.operator-field input{width:100%;height:38px;padding:0 16px;border:1px solid var(--border-default);border-radius:var(--radius-sm);background:transparent;color:var(--text-primary);font:400 14px/22px var(--font-sans);outline:0}.operator-field input::placeholder{color:var(--text-muted)}.operator-field input:focus{border-color:var(--border-active);box-shadow:0 0 0 3px rgba(23,118,229,.10)}
+.operator-modal-footer{display:flex;align-items:center;justify-content:flex-end;gap:12px;padding:16px 24px;border-top:1px solid var(--border-divider);flex-shrink:0}
+.operator-modal-footer .btn-danger{color:#FFF;background:var(--red-700);border-color:var(--red-700)}.operator-modal-footer .btn-danger:hover{background:#A83030;border-color:#A83030}.operator-modal-footer .btn-danger:active{background:#8F2929;border-color:#8F2929}
+.delete-message{margin:0;color:var(--text-secondary);line-height:22px}.delete-message strong{color:var(--text-primary);font-weight:500}.delete-warning{margin:12px 0 0;color:var(--red-500);font-size:14px;line-height:22px}
+.operator-empty{height:160px!important;text-align:center;color:var(--text-muted)}
+.operator-toast{position:fixed;top:24px;left:50%;z-index:var(--z-toast);padding:12px 16px;border:1px solid var(--border-divider);border-radius:var(--radius-md);background:var(--card-bg);color:var(--text-primary);box-shadow:var(--overlay-shadow);opacity:0;pointer-events:none;transform:translate(-50%,-8px);transition:opacity 160ms ease,transform 160ms ease}.operator-toast.show{opacity:1;transform:translate(-50%,0)}
+@media(max-width:767px){.operator-form{grid-template-columns:1fr;padding:16px}.operator-field.full{grid-column:auto}.operator-modal-mask{padding:16px}.operator-modal-header{padding:12px 16px}.operator-modal-body{padding:16px}.operator-modal-footer{padding:12px 16px}.operator-page .pagination{align-items:flex-start;flex-direction:column}.operator-page .pagination-right{width:100%;justify-content:space-between}}
+</style>
+</head>
+<body data-active-basic-secondary="运营商管理">
+<div id="sharedHeader" data-active-primary="基础管理"></div>
+<script src="shared-header.js"></script><script src="shared-basic-management.js"></script><script src="shared-table-interactions.js"></script>
+<main class="main operator-page">
+  <div class="breadcrumb"><div class="breadcrumb-list"><span class="breadcrumb-item" onclick="location.href='index.html'"><i class="fa-solid fa-house"></i></span><span class="breadcrumb-separator"><i class="fa-solid fa-chevron-right"></i></span><span class="breadcrumb-item">基础管理</span><span class="breadcrumb-separator"><i class="fa-solid fa-chevron-right"></i></span><span class="breadcrumb-item current">运营商管理</span></div></div>
+  <section class="filter-section operator-filter" id="filterCard">
+    <div class="filter-header"><span class="filter-title">筛选条件</span><button class="filter-toggle" type="button" aria-expanded="true" onclick="toggleFilter()"><i class="fa-solid fa-chevron-up"></i><span>收起</span></button></div>
+    <div class="filters" id="filterRow"><div class="field"><label for="operatorSearch">运营商名称</label><input class="control" id="operatorSearch" type="text" placeholder="请输入运营商名称"></div><div class="actions"><button class="btn btn-primary btn-md" type="button" onclick="applyFilters()"><i class="fa-solid fa-magnifying-glass"></i>查询</button><button class="btn btn-ghost btn-md" type="button" onclick="resetFilters()"><i class="fa-solid fa-rotate-left"></i>重置</button></div></div>
+  </section>
+  <div class="action-bar"><button class="btn btn-primary btn-sm" type="button" onclick="openOperatorModal()"><i class="fa-solid fa-plus"></i>新增</button><button class="btn btn-danger-outline btn-sm" type="button" id="deleteButton" onclick="deleteSelected()" disabled><i class="fa-solid fa-trash-can"></i>删除</button><span class="action-divider" aria-hidden="true"></span><button class="btn btn-secondary btn-sm" type="button" onclick="exportOperators()"><i class="fa-solid fa-download"></i>导出</button><button class="btn btn-secondary btn-sm" type="button" onclick="downloadTemplate()"><i class="fa-solid fa-file-arrow-down"></i>导入模板下载</button><button class="btn btn-secondary btn-sm" type="button" onclick="document.getElementById('importInput').click()"><i class="fa-solid fa-file-import"></i>导入</button><input id="importInput" type="file" accept=".csv,.xlsx,.xls" hidden></div>
+  <div class="table-container operator-table-container"><div class="table-wrap" id="tableWrap"><table class="operator-table"><thead><tr><th class="col-fixed-left col-fixed-checkbox"><div class="checkbox" id="headerCheckbox" role="checkbox" tabindex="0" aria-label="全选" onclick="toggleSelectAll()" onkeydown="checkboxKeydown(event,toggleSelectAll)"></div></th><th class="col-fixed-left col-fixed-name col-last-left-fixed">运营商名称</th><th>层级</th><th class="num-header">用户数量（个）</th><th class="num-header">资源数量（个）</th><th class="num-header">聚合容量（kW）</th><th class="num-header">可调容量（kW）</th><th>所属区域</th><th>常用联系人</th><th>联系方式</th><th class="sortable" data-sort="updated" onclick="toggleSort('updated', this)">更新时间<i class="fa-solid fa-sort sort-icon"></i></th><th class="col-fixed-right col-first-right-fixed">操作</th></tr></thead><tbody id="operatorRows"></tbody></table></div><div class="pagination"><div class="pagination-left"><span class="pagination-total" id="totalRecords">共 0 条记录</span><div class="page-size-select"><span>每页</span><div class="page-size-trigger" tabindex="0" onclick="togglePageSize(event)"><span id="pageSizeValue">10条</span><i class="fa-solid fa-chevron-down"></i></div><div class="page-size-panel" id="pageSizePanel"><div class="page-size-option active" onclick="changePageSize(10)">10条</div><div class="page-size-option" onclick="changePageSize(20)">20条</div></div></div></div><div class="pagination-right"><div class="page-numbers" id="pageNumbers"></div><div class="page-jump"><span>跳至</span><input id="jumpInput" value="1" aria-label="跳转页码" onkeydown="handleJump(event)"><span>页</span></div></div></div></div>
+</main>
+<div class="operator-modal-mask" id="operatorModalMask" role="presentation"><section class="operator-modal" role="dialog" aria-modal="true" aria-labelledby="operatorModalTitle"><div class="operator-modal-header"><h2 class="operator-modal-title" id="operatorModalTitle">新增运营商</h2><button class="modal-close" type="button" aria-label="关闭" onclick="closeOperatorModal()"><i class="fa-solid fa-xmark"></i></button></div><form class="operator-form" id="operatorForm"><div class="operator-field full"><label for="formName">运营商名称</label><input id="formName" required placeholder="请输入运营商名称"></div><div class="operator-field"><label for="formLevel">层级</label><input id="formLevel" placeholder="如：省级"></div><div class="operator-field"><label for="formRegion">所属区域</label><input id="formRegion" placeholder="请输入所属区域"></div><div class="operator-field"><label for="formContact">常用联系人</label><input id="formContact" placeholder="请输入联系人"></div><div class="operator-field"><label for="formPhone">联系方式</label><input id="formPhone" placeholder="请输入联系方式"></div></form><div class="operator-modal-footer"><button class="btn btn-ghost btn-md" type="button" onclick="closeOperatorModal()">取消</button><button class="btn btn-primary btn-md" type="button" onclick="saveOperator()">保存</button></div></section></div>
+<div class="operator-modal-mask" id="deleteModalMask" role="presentation"><section class="operator-modal small" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle"><div class="operator-modal-header"><h2 class="operator-modal-title" id="deleteModalTitle">删除运营商</h2><button class="modal-close" type="button" aria-label="关闭" onclick="closeDeleteModal()"><i class="fa-solid fa-xmark"></i></button></div><div class="operator-modal-body"><p class="delete-message" id="deleteMessage"></p><p class="delete-warning"><i class="fa-solid fa-triangle-exclamation"></i> 删除后将无法恢复，请确认操作。</p></div><div class="operator-modal-footer"><button class="btn btn-ghost btn-md" type="button" onclick="closeDeleteModal()">取消</button><button class="btn btn-danger btn-md" type="button" onclick="confirmDelete()">确认删除</button></div></section></div>
+<div class="operator-toast" id="toast" role="status" aria-live="polite"></div>
+<script>
+const operators = [
+  {id:1,name:'国网江苏综合能源服务有限公司',level:'省级',users:128,resources:236,capacity:18640,adjustable:9420,region:'江苏省',contact:'张伟',phone:'138****2186',updated:'2026-09-22 14:32'},
+  {id:2,name:'华东电力运营有限公司',level:'区域级',users:96,resources:184,capacity:14280,adjustable:7680,region:'华东区域',contact:'李娜',phone:'139****5621',updated:'2026-09-21 10:16'},
+  {id:3,name:'南方电网综合能源有限公司',level:'区域级',users:86,resources:161,capacity:12860,adjustable:6940,region:'华南区域',contact:'陈杰',phone:'136****9074',updated:'2026-09-20 16:48'},
+  {id:4,name:'浙江清洁能源运营有限公司',level:'省级',users:74,resources:142,capacity:10960,adjustable:5860,region:'浙江省',contact:'王敏',phone:'137****4432',updated:'2026-09-19 09:25'},
+  {id:5,name:'安徽省综合能源服务有限公司',level:'省级',users:62,resources:118,capacity:8640,adjustable:4620,region:'安徽省',contact:'赵磊',phone:'135****7815',updated:'2026-09-18 14:05'},
+  {id:6,name:'山东能源数字运营有限公司',level:'省级',users:58,resources:105,capacity:7980,adjustable:4180,region:'山东省',contact:'刘洋',phone:'151****3098',updated:'2026-09-17 11:37'},
+  {id:7,name:'苏州工业园区能源运营中心',level:'市级',users:46,resources:86,capacity:6240,adjustable:3280,region:'苏州市',contact:'孙莉',phone:'152****6740',updated:'2026-09-16 17:20'},
+  {id:8,name:'杭州城市能源管理有限公司',level:'市级',users:41,resources:79,capacity:5860,adjustable:2940,region:'杭州市',contact:'周鹏',phone:'158****1269',updated:'2026-09-15 08:55'},
+  {id:9,name:'南京江北新区能源服务中心',level:'市级',users:38,resources:67,capacity:4920,adjustable:2510,region:'南京市',contact:'何静',phone:'159****8351',updated:'2026-09-14 15:12'},
+  {id:10,name:'无锡新吴区综合能源有限公司',level:'区县级',users:31,resources:54,capacity:3680,adjustable:1940,region:'无锡市',contact:'钱浩',phone:'180****4427',updated:'2026-09-13 13:41'},
+  {id:11,name:'宁波北仑能源运营有限公司',level:'区县级',users:28,resources:49,capacity:3260,adjustable:1680,region:'宁波市',contact:'郑晨',phone:'181****7602',updated:'2026-09-12 10:28'},
+  {id:12,name:'嘉兴秀洲智慧能源服务中心',level:'区县级',users:24,resources:42,capacity:2840,adjustable:1460,region:'嘉兴市',contact:'林倩',phone:'189****5316',updated:'2026-09-11 16:03'}
+];
+let filteredOperators = operators.slice(), selectedIds = new Set(), currentPage = 1, pageSize = 10, editingId = null, toastTimer, lastModalTrigger = null, sortState = { key: null, dir: null };
+const $ = id => document.getElementById(id);
+function escapeHtml(value){return String(value).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]))}
+function showToast(message){$('toast').textContent=message;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),2200)}
+function toggleFilter(){const collapsed=$('filterCard').classList.toggle('is-collapsed');const button=$('filterCard').querySelector('.filter-toggle');button.setAttribute('aria-expanded',String(!collapsed));button.querySelector('span').textContent=collapsed?'展开':'收起';button.querySelector('i').className='fa-solid fa-chevron-'+(collapsed?'down':'up')}
+function applyFilters(){const keyword=$('operatorSearch').value.trim();filteredOperators=operators.filter(row=>!keyword||row.name.includes(keyword));sortOperators();currentPage=1;renderTable()}
+function resetFilters(){$('operatorSearch').value='';applyFilters()}
+function sortOperators(){if(!sortState.key)return;const direction=sortState.dir==='asc'?1:-1;filteredOperators.sort((a,b)=>String(a[sortState.key]).localeCompare(String(b[sortState.key]))*direction)}
+function toggleSort(key,thEl){if(sortState.key===key){if(sortState.dir==='asc')sortState.dir='desc';else if(sortState.dir==='desc'){sortState.key=null;sortState.dir=null}}else{sortState.key=key;sortState.dir='asc'}document.querySelectorAll('th.sortable').forEach(th=>{th.classList.remove('asc','desc');th.removeAttribute('aria-sort');const icon=th.querySelector('.sort-icon');if(th===thEl&&sortState.dir){th.classList.add(sortState.dir);th.setAttribute('aria-sort',sortState.dir==='asc'?'ascending':'descending');icon.className=`fa-solid fa-sort-${sortState.dir==='asc'?'up':'down'} sort-icon`}else if(icon)icon.className='fa-solid fa-sort sort-icon'});if(!sortState.key){applyFilters();return}sortOperators();currentPage=1;renderTable()}
+function toggleSelectAll(){const pageRows=pageData();const all=pageRows.length&&pageRows.every(row=>selectedIds.has(row.id));pageRows.forEach(row=>all?selectedIds.delete(row.id):selectedIds.add(row.id));renderTable()}
+function toggleRow(id){selectedIds.has(id)?selectedIds.delete(id):selectedIds.add(id);renderTable()}
+function pageData(){const start=(currentPage-1)*pageSize;return filteredOperators.slice(start,start+pageSize)}
+function renderTable(){const total=Math.max(1,Math.ceil(filteredOperators.length/pageSize));if(currentPage>total)currentPage=total;const rows=pageData();$('operatorRows').innerHTML=rows.length?rows.map(row=>`<tr class="${selectedIds.has(row.id)?'selected':''}"><td class="col-fixed-left col-fixed-checkbox"><div class="checkbox ${selectedIds.has(row.id)?'checked':''}" role="checkbox" tabindex="0" aria-checked="${selectedIds.has(row.id)}" aria-label="选择 ${escapeHtml(row.name)}" onclick="toggleRow(${row.id})" onkeydown="checkboxKeydown(event,()=>toggleRow(${row.id}))"></div></td><td class="col-fixed-left col-fixed-name col-last-left-fixed" title="${escapeHtml(row.name)}"><span class="operator-name">${escapeHtml(row.name)}</span></td><td>${escapeHtml(row.level)}</td><td class="num">${row.users}</td><td class="num">${row.resources}</td><td class="num">${row.capacity.toLocaleString('zh-CN')}</td><td class="num">${row.adjustable.toLocaleString('zh-CN')}</td><td>${escapeHtml(row.region)}</td><td class="contact" title="${escapeHtml(row.contact)}">${escapeHtml(row.contact)}</td><td>${escapeHtml(row.phone)}</td><td class="date">${escapeHtml(row.updated)}</td><td class="col-fixed-right col-first-right-fixed"><button class="action-link" type="button" onclick="openOperatorModal(${row.id})">编辑</button></td></tr>`).join(''):`<tr><td class="operator-empty" colspan="12">暂无匹配的运营商数据</td></tr>`;$('totalRecords').textContent=`共 ${filteredOperators.length} 条记录`;$('jumpInput').value=currentPage;updateSelectionState();renderPages()}
+function updateSelectionState(){const rows=pageData();const all=rows.length&&rows.every(row=>selectedIds.has(row.id));const some=rows.some(row=>selectedIds.has(row.id));$('headerCheckbox').classList.toggle('checked',all);$('headerCheckbox').classList.toggle('indeterminate',!all&&some);$('headerCheckbox').setAttribute('aria-checked',all?'true':some?'mixed':'false');$('deleteButton').disabled=selectedIds.size===0}
+function renderPages(){const total=Math.max(1,Math.ceil(filteredOperators.length/pageSize));if(currentPage>total)currentPage=total;const items=[`<button class="page-btn ${currentPage===1?'disabled':''}" type="button" ${currentPage===1?'disabled':''} onclick="goToPage(${currentPage-1})" aria-label="上一页"><i class="fa-solid fa-chevron-left"></i></button>`];for(let page=1;page<=total;page++){if(total>7&&page>3&&page<total-1&&Math.abs(page-currentPage)>1){if(items[items.length-1]!=='<span class="page-ellipsis">...</span>')items.push('<span class="page-ellipsis">...</span>');continue}items.push(`<button class="page-btn ${page===currentPage?'active':''}" type="button" onclick="goToPage(${page})" aria-current="${page===currentPage?'page':'false'}">${page}</button>`)}items.push(`<button class="page-btn ${currentPage===total?'disabled':''}" type="button" ${currentPage===total?'disabled':''} onclick="goToPage(${currentPage+1})" aria-label="下一页"><i class="fa-solid fa-chevron-right"></i></button>`);$('pageNumbers').innerHTML=items.join('')}
+function goToPage(page){const total=Math.max(1,Math.ceil(filteredOperators.length/pageSize));currentPage=Math.max(1,Math.min(total,page));renderTable()}
+function togglePageSize(event){event.stopPropagation();document.querySelector('.page-size-select').classList.toggle('open')}
+function changePageSize(size){pageSize=size;currentPage=1;$('pageSizeValue').textContent=size+'条';document.querySelectorAll('.page-size-option').forEach(item=>item.classList.toggle('active',item.textContent===size+'条'));document.querySelector('.page-size-select').classList.remove('open');renderTable()}
+function handleJump(event){if(event.key==='Enter'){const target=Number.parseInt(event.target.value,10);if(Number.isInteger(target))goToPage(target);else event.target.value=currentPage}}
+function openOperatorModal(id){lastModalTrigger=document.activeElement;editingId=id||null;const row=operators.find(item=>item.id===id);$('operatorModalTitle').textContent=row?'编辑运营商':'新增运营商';$('formName').value=row?.name||'';$('formLevel').value=row?.level||'';$('formRegion').value=row?.region||'';$('formContact').value=row?.contact||'';$('formPhone').value=row?.phone||'';$('operatorModalMask').classList.add('open');$('formName').focus()}
+function closeOperatorModal(){ $('operatorModalMask').classList.remove('open'); if(lastModalTrigger?.isConnected){lastModalTrigger.focus();lastModalTrigger=null} }
+function saveOperator(){const name=$('formName').value.trim();if(!name){showToast('请输入运营商名称');$('formName').focus();return}const payload={name,level:$('formLevel').value.trim()||'省级',region:$('formRegion').value.trim()||'-',contact:$('formContact').value.trim()||'-',phone:$('formPhone').value.trim()||'-',users:0,resources:0,capacity:0,adjustable:0,updated:new Date().toLocaleString('zh-CN',{hour12:false}).replaceAll('/','-')};if(editingId)Object.assign(operators.find(item=>item.id===editingId),payload);else operators.unshift({id:Date.now(),...payload});closeOperatorModal();applyFilters();showToast(editingId?'运营商信息已更新':'运营商已新增')}
+function deleteSelected(){if(!selectedIds.size)return;lastModalTrigger=document.activeElement;$('deleteMessage').innerHTML=`将删除已选择的 <strong>${selectedIds.size}</strong> 个运营商。`;$('deleteModalMask').classList.add('open');$('deleteModalMask').querySelector('.modal-close').focus()}
+function closeDeleteModal(){ $('deleteModalMask').classList.remove('open'); if(lastModalTrigger?.isConnected){lastModalTrigger.focus();lastModalTrigger=null} }
+function confirmDelete(){for(let index=operators.length-1;index>=0;index--)if(selectedIds.has(operators[index].id))operators.splice(index,1);selectedIds.clear();closeDeleteModal();applyFilters();showToast('已删除选中的运营商')}
+function exportOperators(){const header=['运营商名称','层级','用户数量（个）','资源数量（个）','聚合容量（kW）','可调容量（kW）','所属区域','常用联系人','联系方式','更新时间'];const csv=[header,...filteredOperators.map(row=>[row.name,row.level,row.users,row.resources,row.capacity,row.adjustable,row.region,row.contact,row.phone,row.updated])].map(row=>row.map(value=>`"${String(value).replaceAll('"','""')}"`).join(',')).join('\n');const link=document.createElement('a');link.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));link.download='运营商管理.csv';link.click();URL.revokeObjectURL(link.href);showToast('运营商数据已导出')}
+function downloadTemplate(){const link=document.createElement('a');link.href=URL.createObjectURL(new Blob(['运营商名称,层级,所属区域,常用联系人,联系方式\n'],{type:'text/csv;charset=utf-8'}));link.download='运营商导入模板.csv';link.click();URL.revokeObjectURL(link.href);showToast('导入模板已下载')}
+$('importInput').addEventListener('change',event=>{if(event.target.files[0])showToast(`已选择导入文件：${event.target.files[0].name}`);event.target.value=''})
+document.addEventListener('click',event=>{if(!event.target.closest('.page-size-select'))document.querySelector('.page-size-select').classList.remove('open')});
+function checkboxKeydown(event,action){if(event.key==='Enter'||event.key===' '){event.preventDefault();action()}}
+document.addEventListener('keydown',event=>{if(event.key==='Escape'){closeOperatorModal();closeDeleteModal()}});
+renderTable();
+</script>
+</body>
+</html>
