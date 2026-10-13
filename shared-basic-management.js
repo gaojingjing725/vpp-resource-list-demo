@@ -8,7 +8,7 @@
     { label: '量测配置', children: ['资源类型', '量测类型', '数据类型', '设备类型', '电压等级类型', '行业管理'] }
   ];
   const activeSecondary = document.body.dataset.activeBasicSecondary || '';
-  const routes = { 运营商管理: 'operator-management.html' };
+  const routes = { 运营商管理: 'operator-management.html', 客户管理: 'customer-management.html' };
 
   document.querySelectorAll('.header-nav-item').forEach(item => {
     const label = Array.from(item.childNodes).find(node => node.nodeType === Node.TEXT_NODE && node.textContent.trim());

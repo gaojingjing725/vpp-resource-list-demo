@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark" data-nav-layout="top">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>客户管理 - 虚拟电厂智慧运营平台</title>
+  <script>
+    try {
+      document.documentElement.dataset.theme = localStorage.getItem('vpp-theme') || 'dark';
+      document.documentElement.dataset.navLayout = localStorage.getItem('vpp-nav-layout') || 'top';
+    } catch (e) {}
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="shared-navigation.css?v=20260827-3">
+  <link rel="stylesheet" href="shared-list-components.css?v=20261013-1">
+  <link rel="stylesheet" href="shared-primary-menu-active.css">
+  <link rel="stylesheet" href="shared-theme.css">
+  <link rel="stylesheet" href="shared-page-shell.css">
+  <link rel="stylesheet" href="customer-management-page.css">
+</head>
+<body data-active-basic-secondary="客户管理">
+  <div id="sharedHeader" data-active-primary="基础管理"></div>
+  <script src="shared-header.js"></script>
+  <script src="shared-basic-management.js"></script>
+  <main class="main customer-page">
+    <div class="breadcrumb">
+      <div class="breadcrumb-list">
+        <span class="breadcrumb-item" onclick="location.href='index.html'"><i class="fa-solid fa-house"></i></span>
+        <span class="breadcrumb-separator"><i class="fa-solid fa-chevron-right"></i></span>
+        <span class="breadcrumb-item">基础管理</span>
+        <span class="breadcrumb-separator"><i class="fa-solid fa-chevron-right"></i></span>
+        <span class="breadcrumb-item current">客户管理</span>
+      </div>
+    </div>
+    <section class="filter-section" id="filterCard">
+      <div class="filter-header">
+        <span class="filter-title">筛选条件</span>
+        <button class="filter-toggle" type="button" aria-expanded="true" aria-controls="filterRow" id="filterToggle"><i class="fa-solid fa-chevron-up"></i><span>收起</span></button>
+      </div>
+      <form class="filters" id="filterRow">
+        <div class="field"><label for="accountSearch">用户户号</label><input class="control" id="accountSearch" placeholder="请输入用户户号" autocomplete="off"></div>
+        <div class="field"><label for="customerSearch">用户名称</label><input class="control" id="customerSearch" placeholder="请输入用户名称" autocomplete="off"></div>
+        <div class="field">
+          <label id="operatorLabel">所属运营商</label>
+          <div class="select-wrap" id="operatorSelect">
+            <div class="control select-control" role="combobox" tabindex="0" aria-labelledby="operatorLabel" aria-expanded="false" aria-controls="operatorPanel" aria-haspopup="listbox"><span>全部运营商</span><i class="fa-solid fa-chevron-down"></i></div>
+            <div class="select-panel" id="operatorPanel" role="listbox" aria-labelledby="operatorLabel"></div>
+          </div>
+        </div>
+        <div class="actions"><button class="btn btn-primary btn-md" type="submit"><i class="fa-solid fa-magnifying-glass"></i>查询</button><button class="btn btn-ghost btn-md" type="button" id="resetButton"><i class="fa-solid fa-rotate-left"></i>重置</button></div>
+      </form>
+    </section>
+    <div class="action-bar">
+      <button class="btn btn-primary btn-sm" type="button" id="addButton"><i class="fa-solid fa-plus"></i>新增</button>
+      <button class="btn btn-danger-outline btn-sm" type="button" id="deleteButton" disabled><i class="fa-solid fa-trash-can"></i>删除</button>
+      <span class="action-divider" aria-hidden="true"></span>
+      <button class="btn btn-secondary btn-sm" type="button" id="exportButton"><i class="fa-solid fa-download"></i>导出</button>
+      <button class="btn btn-secondary btn-sm" type="button" id="templateButton"><i class="fa-solid fa-file-arrow-down"></i>导入模板下载</button>
+      <button class="btn btn-secondary btn-sm" type="button" id="importButton"><i class="fa-solid fa-file-import"></i>导入</button>
+      <input id="importInput" type="file" accept=".csv,.xlsx,.xls" hidden>
+    </div>
+    <div class="table-card">
+      <div class="table-wrap" id="tableWrap">
+        <table class="customer-table" aria-label="客户管理列表">
+          <colgroup><col class="width-checkbox"><col class="width-name"><col class="width-account"><col class="width-operator"><col class="width-power"><col class="width-industry"><col class="width-resources"><col class="width-capacity"><col class="width-capacity"><col class="width-voltage"><col class="width-date"><col class="width-action"></colgroup>
+          <thead><tr>
+            <th class="col-fixed-left col-fixed-checkbox"><div class="checkbox" id="headerCheckbox" role="checkbox" tabindex="0" aria-checked="false" aria-label="全选当前页"></div></th>
+            <th class="col-fixed-name col-last-left-fixed">用户名称</th><th>用户户号</th><th>所属运营商</th><th>所属电力客户名称</th><th>行业类型</th>
+            <th class="num-header">资源数量（个）</th><th class="num-header">聚合容量（kW）</th><th class="num-header">可调容量（kW）</th><th>电压等级</th>
+            <th class="sortable" id="updatedSort" tabindex="0" aria-sort="none">更新时间<i class="fa-solid fa-sort sort-icon"></i></th>
+            <th class="col-fixed-right col-first-right-fixed">操作</th>
+          </tr></thead>
+          <tbody id="customerRows"></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <div class="pagination-left">
+          <span class="pagination-total" id="totalRecords">共 0 条记录</span>
+          <div class="page-size-select" id="pageSizeSelect"><span>每页</span><div class="page-size-trigger" tabindex="0" role="combobox" aria-label="每页条数" aria-expanded="false" aria-controls="pageSizePanel" aria-haspopup="listbox"><span id="pageSizeValue">10条</span><i class="fa-solid fa-chevron-down"></i></div><div class="page-size-panel" id="pageSizePanel" role="listbox" aria-label="每页条数"><div class="page-size-option active" role="option" tabindex="-1" aria-selected="true" data-size="10">10条</div><div class="page-size-option" role="option" tabindex="-1" aria-selected="false" data-size="20">20条</div></div></div>
+        </div>
+        <div class="pagination-right"><div class="page-numbers" id="pageNumbers"></div><div class="page-jump"><span>跳至</span><input id="jumpInput" value="1" inputmode="numeric" aria-label="跳转页码"><span>页</span></div></div>
+      </div>
+    </div>
+  </main>
+  <div class="customer-modal-mask" id="customerModalMask" hidden>
+    <section class="customer-modal" role="dialog" aria-modal="true" aria-labelledby="customerModalTitle">
+      <div class="customer-modal-header"><h2 id="customerModalTitle">新增客户</h2><button class="modal-close" type="button" aria-label="关闭" data-close-modal><i class="fa-solid fa-xmark"></i></button></div>
+      <form class="customer-form" id="customerForm" novalidate>
+        <div class="customer-field"><label class="required" for="formName">用户名称</label><input class="control" id="formName" maxlength="100" placeholder="请输入用户名称" aria-describedby="formNameError"><span class="field-error" id="formNameError"></span></div>
+        <div class="customer-field"><label class="required" for="formAccount">用户户号</label><input class="control" id="formAccount" maxlength="40" placeholder="请输入用户户号" aria-describedby="formAccountError"><span class="field-error" id="formAccountError"></span></div>
+        <div class="customer-field"><label class="required" id="formOperatorLabel">所属运营商</label><div class="select-wrap" id="formOperatorSelect"><div class="control select-control" role="combobox" tabindex="0" aria-labelledby="formOperatorLabel" aria-expanded="false" aria-controls="formOperatorPanel" aria-haspopup="listbox" aria-describedby="formOperatorError"><span>请选择所属运营商</span><i class="fa-solid fa-chevron-down"></i></div><div class="select-panel" id="formOperatorPanel" role="listbox" aria-labelledby="formOperatorLabel"></div></div><span class="field-error" id="formOperatorError"></span></div>
+        <div class="customer-field"><label for="formPower">所属电力客户名称</label><input class="control" id="formPower" maxlength="100" placeholder="请输入所属电力客户名称"></div>
+        <div class="customer-field"><label id="formIndustryLabel">行业类型</label><div class="select-wrap" id="formIndustrySelect"><div class="control select-control" role="combobox" tabindex="0" aria-labelledby="formIndustryLabel" aria-expanded="false" aria-controls="formIndustryPanel" aria-haspopup="listbox"><span>请选择行业类型</span><i class="fa-solid fa-chevron-down"></i></div><div class="select-panel" id="formIndustryPanel" role="listbox" aria-labelledby="formIndustryLabel"></div></div></div>
+        <div class="customer-field"><label id="formVoltageLabel">电压等级</label><div class="select-wrap" id="formVoltageSelect"><div class="control select-control" role="combobox" tabindex="0" aria-labelledby="formVoltageLabel" aria-expanded="false" aria-controls="formVoltagePanel" aria-haspopup="listbox"><span>请选择电压等级</span><i class="fa-solid fa-chevron-down"></i></div><div class="select-panel" id="formVoltagePanel" role="listbox" aria-labelledby="formVoltageLabel"></div></div></div>
+      </form>
+      <div class="customer-modal-footer"><button class="btn btn-ghost btn-md" type="button" data-close-modal>取消</button><button class="btn btn-primary btn-md" type="submit" form="customerForm">保存</button></div>
+    </section>
+  </div>
+  <div class="customer-modal-mask" id="deleteModalMask" hidden>
+    <section class="customer-modal small" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+      <div class="customer-modal-header"><h2 id="deleteModalTitle">删除客户</h2><button class="modal-close" type="button" aria-label="关闭" data-close-modal><i class="fa-solid fa-xmark"></i></button></div>
+      <div class="customer-modal-body"><p id="deleteMessage"></p><p class="delete-warning"><i class="fa-solid fa-triangle-exclamation"></i> 删除后将无法恢复，请确认操作。</p></div>
+      <div class="customer-modal-footer"><button class="btn btn-ghost btn-md" type="button" data-close-modal>取消</button><button class="btn btn-danger btn-md" type="button" id="confirmDeleteButton">确认删除</button></div>
+    </section>
+  </div>
+  <div class="customer-toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="shared-table-interactions.js"></script>
+  <script src="vendor/xlsx-0.20.3.full.min.js"></script>
+  <script src="customer-management.js"></script>
+</body>
+</html>

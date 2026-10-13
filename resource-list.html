@@ -1158,9 +1158,8 @@ tbody tr:last-child td {
   border-bottom: none;
 }
 
-/* 数字列 — 右对齐 + 等宽字体 */
+/* 数字列 — 左对齐由共享表格样式提供，保留等宽字体 */
 td.num {
-  text-align: right;
   font-family: var(--font-mono);
 }
 
@@ -2134,7 +2133,7 @@ thead th.col-fixed-right {
 }
 </style>
 <link rel="stylesheet" href="shared-navigation.css?v=20260827-3">
-<link rel="stylesheet" href="shared-list-components.css?v=20260821-6">
+<link rel="stylesheet" href="shared-list-components.css?v=20261013-1">
 <link rel="stylesheet" href="shared-primary-menu-active.css">
 <link rel="stylesheet" href="shared-theme.css">
 </head>
@@ -2348,8 +2347,8 @@ thead th.col-fixed-right {
             <th>户号</th>
             <th>区域</th>
             <th>资源类型</th>
-            <th style="text-align:right;">资源容量(kW)</th>
-            <th style="text-align:right;">可调容量(kW)</th>
+            <th class="num-header">资源容量(kW)</th>
+            <th class="num-header">可调容量(kW)</th>
             <th>电压等级</th>
             <th class="sortable" data-sort="updateTime" onclick="toggleSort('updateTime', this)">更新时间<i class="fa-solid fa-sort sort-icon"></i></th>
             <th class="col-fixed-right col-fixed-ops col-first-right-fixed">操作</th>
