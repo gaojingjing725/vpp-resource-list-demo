@@ -40,6 +40,7 @@
 .btn:focus-visible { outline: 2px solid var(--border-active,rgba(22,104,220,.30)); outline-offset: 2px; box-shadow: 0 0 0 3px rgba(23,118,229,.10); }
 .btn:disabled { color: var(--text-disabled,var(--disabled)); background: var(--gray-700,#1E2D4A); border-color: transparent; cursor: not-allowed; opacity:.6; }
 .btn-secondary:disabled,.btn-ghost:disabled,.btn-danger-outline:disabled { background: transparent; border-color: var(--border-subtle,rgba(255,255,255,.06)); }
+.btn-danger-outline:disabled,.btn-danger-outline:disabled:hover,.btn-danger-outline:disabled:active { color: var(--text-disabled,var(--disabled)); background: transparent; border-color: var(--border-subtle,rgba(255,255,255,.06)); opacity: 1; }
 .actions .btn,.filter-actions .btn,.filter-actions .filter-query,.filter-actions .filter-reset { width: 64px; }
 .table-card,.table-container { overflow: hidden; background: var(--card-bg,var(--card)); border: 1px solid var(--border-subtle,var(--divider)); border-radius: 12px; }
 .table-toolbar { min-height: 54px; padding: 8px 16px; display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--border-divider,var(--divider)); }
