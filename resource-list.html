@@ -2323,7 +2323,7 @@ thead th.col-fixed-right {
       <i class="fa-solid fa-plus"></i>
       新增资源
     </button>
-    <button class="btn btn-danger-outline btn-sm" onclick="batchDelete()">
+    <button class="btn btn-danger-outline btn-sm" id="batchDeleteButton" onclick="batchDelete()" disabled>
       <i class="fa-solid fa-trash-can"></i>
       批量删除
     </button>
@@ -2845,6 +2845,7 @@ function updateBatchBar() {
   const count = document.getElementById('batchCount');
   const clearBtn = document.getElementById('batchClearBtn');
   const divider = document.getElementById('batchDivider');
+  document.getElementById('batchDeleteButton').disabled = selectedIds.size === 0;
   if (selectedIds.size > 0) {
     count.style.display = '';
     clearBtn.style.display = '';
