@@ -14,14 +14,251 @@
 .date-range-demo { display:flex; align-items:center; justify-content:space-between; gap:8px; padding:0 14px 0 16px; color:var(--text); text-align:left; cursor:pointer; }
 .date-range-demo span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .date-range-demo i { flex:0 0 auto; color:var(--muted); font-size:12px; }
+.date-range-wrap { position:relative; }
+.date-range-tooltip { position:absolute; right:0; bottom:calc(100% + 8px); z-index:1000; width:max-content; max-width:min(400px,calc(100vw - 48px)); padding:8px 10px; border:1px solid var(--border-default); border-radius:8px; background:var(--surface-overlay); box-shadow:var(--overlay-shadow); color:var(--text-primary); font-size:12px; line-height:18px; white-space:normal; overflow-wrap:anywhere; pointer-events:none; opacity:0; visibility:hidden; transform:translateY(4px); transition:opacity 150ms ease,transform 150ms ease,visibility 150ms ease; }
+.date-range-wrap:not(.open) .date-range-demo:is(:hover,:focus) + .date-range-tooltip { opacity:1; visibility:visible; transform:none; }
+.date-range-demo .placeholder { color:var(--text-muted); }
+.date-time-panel { position:absolute; top:calc(100% + 4px); right:0; z-index:1100; width:520px; max-width:calc(100vw - 48px); padding:16px; overflow:auto; border:1px solid var(--border-default); border-radius:8px; background:var(--surface-overlay); box-shadow:var(--overlay-shadow); color:var(--text-primary); }
+.date-time-panel[hidden] { display:none; }
+.date-time-panel.above { top:auto; bottom:calc(100% + 4px); }
+.date-range-wrap.open { z-index:1100; }
+.date-time-content { display:grid; grid-template-columns:minmax(0,1fr) 160px; gap:16px; }
+.date-time-header { display:grid; grid-template-columns:32px 1fr 32px; align-items:center; margin-bottom:8px; }
+.date-time-header strong { font-size:14px; font-weight:500; text-align:center; }
+.date-time-header button { width:32px; height:32px; padding:0; border:0; border-radius:6px; background:transparent; color:var(--text-muted); cursor:pointer; }
+.date-time-header button:hover { background:var(--hover-bg); color:var(--primary-400); }
+.date-time-calendar { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); }
+.date-time-week { height:28px; color:var(--text-muted); font-size:12px; line-height:28px; text-align:center; }
+.date-time-day { height:32px; padding:0; border:0; border-radius:6px; background:transparent; color:var(--text-secondary); font-size:12px; cursor:pointer; }
+.date-time-day:hover,.date-time-day:focus-visible { background:var(--hover-bg); color:var(--primary-400); }
+.date-time-day.outside { color:var(--text-disabled); }
+.date-time-day.in-range { background:var(--hover-bg); color:var(--primary-400); }
+.date-time-day.selected { background:var(--primary-500); color:#fff; }
+.date-time-fields { display:grid; grid-template-columns:minmax(0,1fr); gap:16px; }
+.date-time-fields label { display:block; margin-bottom:6px; color:var(--text-secondary); font-size:12px; }
+.date-time-date { display:block; width:100%; height:30px; margin-bottom:6px; padding:0 8px; border:1px solid var(--border-default); border-radius:6px; background:transparent; color:var(--text-primary); font-size:12px; text-align:left; cursor:pointer; }
+.date-time-date:hover { border-color:var(--border-hover); }
+.date-time-date.active { border-color:var(--border-active); background:var(--hover-bg); color:var(--primary-400); }
+.date-time-fields .control { height:32px; padding:0 10px; font-size:13px; }
+.date-time-hint { min-height:18px; margin:8px 0; color:var(--text-muted); font-size:12px; line-height:18px; }
+.date-time-hint.error { color:var(--red-500); }
+.date-time-footer { display:flex; justify-content:flex-end; gap:8px; margin-top:12px; padding-top:12px; border-top:1px solid var(--border-divider); }
+.date-time-footer .clear { margin-right:auto; }
+@media (max-width:600px) {
+  .date-time-panel,.date-time-panel.above { position:fixed; top:50%; bottom:auto; left:50%; right:auto; width:calc(100vw - 32px); max-width:360px; max-height:calc(100dvh - 32px); transform:translate(-50%,-50%); }
+  .date-time-content { display:block; }
+  .date-time-fields { grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; margin-top:12px; }
+}
 </style>
 </head>
 <body>
-<header class="header"><div class="header-left"><div class="header-logo"><div class="header-logo-icon"><img src="vpp-logo.svg" width="32" height="32" alt=""></div><span class="header-logo-title">虚拟电厂智慧运营平台</span></div><nav class="header-nav"><div class="header-nav-item" onclick="location.href='index.html'">首页</div><div class="header-nav-item">基础管理</div><div class="header-nav-item" onclick="location.href='resource-list.html'">资源池管理</div><div class="header-nav-item header-nav-dropdown" tabindex="0" aria-expanded="false">运行监测<div class="header-submenu"><div class="header-submenu-item">历史数据查询</div><div class="header-submenu-item" onclick="location.href='control-command.html'">控制指令下发</div></div></div><div class="header-nav-item" onclick="location.href='optimization-decomposition.html'">协调控制</div><div class="header-nav-item">物联采集</div><div class="header-nav-item" onclick="location.href='user-management.html'">系统管理</div><div class="header-nav-item">需求响应</div><div class="header-nav-item active">更多</div></nav></div><div class="header-right"><button class="nav-layout-toggle" id="navLayoutToggle" onclick="toggleNavLayout()" aria-label="切换菜单布局"><i class="fa-solid fa-table-columns"></i></button><button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="切换主题"><i class="fa-solid fa-sun"></i></button><div class="header-avatar-wrapper" id="avatarBtn" onclick="toggleAvatar(event)"><div class="header-avatar">GJ</div><i class="fa-solid fa-chevron-down header-avatar-arrow"></i><div class="dropdown-panel--avatar" id="avatarPanel"><div class="dropdown-option"><i class="fa-solid fa-user" style="margin-right:4px;font-size:12px;opacity:.7"></i>个人中心</div><div class="dropdown-divider"></div><div class="dropdown-option" onclick="event.stopPropagation();logoutToLogin()"><i class="fa-solid fa-right-from-bracket" style="margin-right:4px;font-size:12px;opacity:.7"></i>退出登录</div></div></div></div></header>
+<header class="header"><div class="header-left"><div class="header-logo"><div class="header-logo-icon"><img src="vpp-logo.svg" width="32" height="32" alt=""></div><span class="header-logo-title">虚拟电厂智慧运营平台</span></div><nav class="header-nav"><div class="header-nav-item" onclick="location.href='index.html'">首页</div><div class="header-nav-item">基础管理</div><div class="header-nav-item" onclick="location.href='resource-list.html'">资源池管理</div><div class="header-nav-item header-nav-dropdown" tabindex="0" aria-expanded="false">运行监测<div class="header-submenu"><div class="header-submenu-item">历史数据查询</div><div class="header-submenu-item" onclick="location.href='control-command.html'">控制指令下发</div></div></div><div class="header-nav-item" onclick="location.href='optimization-decomposition.html'">协调控制</div><div class="header-nav-item">物联采集</div><div class="header-nav-item" onclick="location.href='user-management.html'">系统管理</div><div class="header-nav-item">需求响应</div><div class="header-nav-item active">示例</div></nav></div><div class="header-right"><button class="nav-layout-toggle" id="navLayoutToggle" onclick="toggleNavLayout()" aria-label="切换菜单布局"><i class="fa-solid fa-table-columns"></i></button><button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="切换主题"><i class="fa-solid fa-sun"></i></button><div class="header-avatar-wrapper" id="avatarBtn" onclick="toggleAvatar(event)"><div class="header-avatar">GJ</div><i class="fa-solid fa-chevron-down header-avatar-arrow"></i><div class="dropdown-panel--avatar" id="avatarPanel"><div class="dropdown-option"><i class="fa-solid fa-user" style="margin-right:4px;font-size:12px;opacity:.7"></i>个人中心</div><div class="dropdown-divider"></div><div class="dropdown-option" onclick="event.stopPropagation();logoutToLogin()"><i class="fa-solid fa-right-from-bracket" style="margin-right:4px;font-size:12px;opacity:.7"></i>退出登录</div></div></div></div></header>
 <main class="main"><div class="breadcrumb"><div class="breadcrumb-list"><i class="fa-solid fa-house"></i><span class="breadcrumb-separator"><i class="fa-solid fa-chevron-right"></i></span><span>更多</span><span class="breadcrumb-separator"><i class="fa-solid fa-chevron-right"></i></span><span>筛选区示例</span></div></div><div class="examples" id="examples"></div></main>
 <script>
-function exampleMarkup(count){const fields=Array.from({length:count},(_,i)=>{if(count===3&&i===2){return '<div class="field"><label>日期时间范围</label><button class="control date-range-demo" type="button" title="2026-10-01 00:00:00 ~ 2026-10-08 23:59:59"><span>2026-10-01 00:00:00 ~ 2026-10-08 23:59:59</span><i class="fa-regular fa-calendar"></i></button></div>'}return '<div class="field"><label>筛选条件 '+(i+1)+'</label><input class="control" placeholder="请输入筛选条件 '+(i+1)+'"></div>'}).join('');return '<section><p class="example-label">'+count+' 个筛选条件</p><div class="filter-section"><div class="filter-header"><span class="filter-title">筛选条件</span><button class="filter-toggle"><i class="fa-solid fa-chevron-up"></i> 收起</button></div><div class="filters">'+fields+'<div class="actions"><button class="btn btn-primary btn-md"><i class="fa-solid fa-magnifying-glass"></i>查询</button><button class="btn btn-ghost btn-md"><i class="fa-solid fa-rotate-left"></i>重置</button></div></div></div></section>'}examples.innerHTML=Array.from({length:8},(_,i)=>exampleMarkup(i+1)).join('');
+function exampleMarkup(count){const fields=Array.from({length:count},(_,i)=>{if(count===2&&i===1){return '<div class="field"><label id="dateRangeLabel2">日期时间范围</label><div id="dateRangeMount2"></div></div>'}if(count===3&&i===2){return '<div class="field"><label id="dateRangeLabel">日期时间范围</label><div class="date-range-wrap" id="dateRangeWrap"><button class="control date-range-demo" id="dateRangeTrigger" type="button" aria-labelledby="dateRangeLabel dateRangeValue" aria-describedby="date-range-tooltip" aria-haspopup="dialog" aria-expanded="false" aria-controls="dateTimePanel"><span id="dateRangeValue">2026-10-01 00:00:00 ~ 2026-10-08 23:59:59</span><i class="fa-regular fa-calendar" aria-hidden="true"></i></button><div class="date-range-tooltip" id="date-range-tooltip" role="tooltip">2026-10-01 00:00:00 ~ 2026-10-08 23:59:59</div><div class="date-time-panel" id="dateTimePanel" role="dialog" aria-label="选择日期时间范围" aria-modal="false" hidden><div class="date-time-content"><div class="date-time-calendar-column"><div class="date-time-header"><button type="button" id="previousMonth" aria-label="上个月"><i class="fa-solid fa-chevron-left"></i></button><strong id="calendarMonthLabel"></strong><button type="button" id="nextMonth" aria-label="下个月"><i class="fa-solid fa-chevron-right"></i></button></div><div class="date-time-calendar" id="dateTimeCalendar"></div></div><div class="date-time-time-column"><div class="date-time-fields"><div><label for="rangeStartTime">开始日期时间</label><button class="date-time-date active" id="rangeStartDate" type="button" aria-label="选择开始日期" aria-pressed="true"></button><input class="control" id="rangeStartTime" type="text" inputmode="numeric" maxlength="8" placeholder="HH:mm:ss" value="00:00:00"></div><div><label for="rangeEndTime">结束日期时间</label><button class="date-time-date" id="rangeEndDate" type="button" aria-label="选择结束日期" aria-pressed="false"></button><input class="control" id="rangeEndTime" type="text" inputmode="numeric" maxlength="8" placeholder="HH:mm:ss" value="23:59:59"></div></div><p class="date-time-hint" id="dateTimeHint" aria-live="polite"></p></div></div><div class="date-time-footer"><button class="btn btn-ghost btn-sm clear" id="clearDateTime" type="button">清空</button><button class="btn btn-ghost btn-sm" id="cancelDateTime" type="button">取消</button><button class="btn btn-primary btn-sm" id="confirmDateTime" type="button">确定</button></div></div></div></div>'}return '<div class="field"><label>筛选条件 '+(i+1)+'</label><input class="control" placeholder="请输入筛选条件 '+(i+1)+'"></div>'}).join('');return '<section><p class="example-label">'+count+' 个筛选条件</p><div class="filter-section"><div class="filter-header"><span class="filter-title">筛选条件</span><button class="filter-toggle"><i class="fa-solid fa-chevron-up"></i> 收起</button></div><div class="filters">'+fields+'<div class="actions"><button class="btn btn-primary btn-md"><i class="fa-solid fa-magnifying-glass"></i>查询</button><button class="btn btn-ghost btn-md"><i class="fa-solid fa-rotate-left"></i>重置</button></div></div></div></section>'}examples.innerHTML=Array.from({length:8},(_,i)=>exampleMarkup(i+1)).join('');
+const secondDateRange = document.getElementById('dateRangeWrap').cloneNode(true);
+secondDateRange.id = 'dateRangeWrap2';
+secondDateRange.querySelectorAll('[id]').forEach(element => { element.id += '2'; });
+secondDateRange.querySelectorAll('label[for]').forEach(label => { label.htmlFor += '2'; });
+const secondTrigger = secondDateRange.querySelector('.date-range-demo');
+secondTrigger.setAttribute('aria-labelledby', 'dateRangeLabel2 dateRangeValue2');
+secondTrigger.setAttribute('aria-describedby', 'date-range-tooltip2');
+secondTrigger.setAttribute('aria-controls', 'dateTimePanel2');
+document.getElementById('dateRangeMount2').replaceWith(secondDateRange);
 function logoutToLogin(){window.location.href='index.html'}function updateButtons(){const light=document.documentElement.dataset.theme==='light',side=document.documentElement.dataset.navLayout==='side';themeToggle.innerHTML='<i class="fa-solid fa-'+(light?'moon':'sun')+'"></i>';navLayoutToggle.innerHTML='<i class="fa-solid fa-'+(side?'window-maximize':'table-columns')+'"></i>'}function toggleTheme(){const root=document.documentElement;root.dataset.theme=root.dataset.theme==='light'?'dark':'light';localStorage.setItem('vpp-theme',root.dataset.theme);updateButtons()}function toggleNavLayout(){const root=document.documentElement;root.dataset.navLayout=root.dataset.navLayout==='side'?'top':'side';localStorage.setItem('vpp-nav-layout',root.dataset.navLayout);updateButtons()}function toggleAvatar(event){event.stopPropagation();avatarBtn.classList.toggle('open');avatarPanel.classList.toggle('show')}document.addEventListener('click',()=>{avatarBtn.classList.remove('open');avatarPanel.classList.remove('show')});document.documentElement.dataset.theme=localStorage.getItem('vpp-theme')||'dark';document.documentElement.dataset.navLayout=localStorage.getItem('vpp-nav-layout')||'top';updateButtons();
+</script>
+<script>
+function initDateRangePicker(dateRangeWrap) {
+const suffix = dateRangeWrap.id === 'dateRangeWrap2' ? '2' : '';
+const byId = id => dateRangeWrap.querySelector('[id="' + id + suffix + '"]');
+const dateRangeTrigger = byId('dateRangeTrigger');
+const dateRangeValue = byId('dateRangeValue');
+const dateRangeTooltip = byId('date-range-tooltip');
+const dateTimePanel = byId('dateTimePanel');
+const dateTimeCalendar = byId('dateTimeCalendar');
+const dateTimeHint = byId('dateTimeHint');
+const rangeStartDate = byId('rangeStartDate');
+const rangeEndDate = byId('rangeEndDate');
+const rangeStartTime = byId('rangeStartTime');
+const rangeEndTime = byId('rangeEndTime');
+const selectedRange = {
+  start: '2026-10-01', end: '2026-10-08',
+  startTime: '00:00:00', endTime: '23:59:59'
+};
+let draftStart = selectedRange.start;
+let draftEnd = selectedRange.end;
+let activeDate = 'start';
+let calendarMonth = new Date(2026, 9, 1);
+
+function dateKey(date) {
+  return [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
+}
+
+function renderDateTimeCalendar() {
+  byId('calendarMonthLabel').textContent = calendarMonth.getFullYear() + ' 年 ' + (calendarMonth.getMonth() + 1) + ' 月';
+  const first = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth(), 1);
+  const cursor = new Date(first.getFullYear(), first.getMonth(), 1 - first.getDay());
+  let days = ['日', '一', '二', '三', '四', '五', '六'].map(day => '<span class="date-time-week">' + day + '</span>').join('');
+  for (let index = 0; index < 42; index++) {
+    const key = dateKey(cursor);
+    const selected = key === draftStart || key === draftEnd;
+    const inRange = draftStart && draftEnd && key > draftStart && key < draftEnd;
+    const outside = cursor.getMonth() !== calendarMonth.getMonth();
+    days += '<button type="button" class="date-time-day' + (outside ? ' outside' : '') + (inRange ? ' in-range' : '') + (selected ? ' selected' : '') + '" data-date="' + key + '" aria-label="' + key + '" aria-pressed="' + selected + '">' + cursor.getDate() + '</button>';
+    cursor.setDate(cursor.getDate() + 1);
+  }
+  dateTimeCalendar.innerHTML = days;
+  rangeStartDate.textContent = draftStart || '请选择日期';
+  rangeEndDate.textContent = draftEnd || '请选择日期';
+  rangeStartDate.classList.toggle('active', activeDate === 'start');
+  rangeEndDate.classList.toggle('active', activeDate === 'end');
+  rangeStartDate.setAttribute('aria-pressed', String(activeDate === 'start'));
+  rangeEndDate.setAttribute('aria-pressed', String(activeDate === 'end'));
+  dateTimeHint.classList.remove('error');
+  dateTimeHint.textContent = !draftStart ? '请选择开始日期' : !draftEnd ? '请选择结束日期' : '';
+}
+
+function updateDateRangeDisplay() {
+  const hasRange = selectedRange.start && selectedRange.end;
+  const value = hasRange
+    ? selectedRange.start + ' ' + selectedRange.startTime + ' ~ ' + selectedRange.end + ' ' + selectedRange.endTime
+    : '开始日期时间 ~ 结束日期时间';
+  dateRangeValue.textContent = value;
+  dateRangeValue.classList.toggle('placeholder', !hasRange);
+  dateRangeTooltip.textContent = value;
+  dateRangeTooltip.hidden = !hasRange;
+  if (hasRange) dateRangeTrigger.setAttribute('aria-describedby', 'date-range-tooltip' + suffix);
+  else dateRangeTrigger.removeAttribute('aria-describedby');
+}
+
+function closeDateTimePanel(returnFocus = false) {
+  dateTimePanel.hidden = true;
+  dateRangeWrap.classList.remove('open');
+  dateRangeTrigger.setAttribute('aria-expanded', 'false');
+  if (returnFocus) dateRangeTrigger.focus();
+}
+
+function positionDateTimePanel() {
+  if (dateTimePanel.hidden) return;
+  if (window.matchMedia('(max-width:600px)').matches) {
+    dateTimePanel.classList.remove('above');
+    dateTimePanel.style.maxHeight = '';
+    dateTimePanel.style.left = '';
+    dateTimePanel.style.right = '';
+    dateTimePanel.style.maxWidth = '';
+    return;
+  }
+  const mainLeft = document.querySelector('.main').getBoundingClientRect().left;
+  dateTimePanel.style.maxWidth = Math.max(200, window.innerWidth - mainLeft - 48) + 'px';
+  const trigger = dateRangeTrigger.getBoundingClientRect();
+  const panelWidth = dateTimePanel.offsetWidth;
+  const panelLeft = Math.max(mainLeft + 24, Math.min(trigger.right - panelWidth, window.innerWidth - panelWidth - 24));
+  dateTimePanel.style.left = panelLeft - dateRangeWrap.getBoundingClientRect().left + 'px';
+  dateTimePanel.style.right = 'auto';
+  const below = window.innerHeight - trigger.bottom - 12;
+  const headerBottom = document.querySelector('.header').getBoundingClientRect().bottom;
+  const above = trigger.top - headerBottom - 12;
+  const openAbove = below < dateTimePanel.scrollHeight && above >= below;
+  dateTimePanel.classList.toggle('above', openAbove);
+  dateTimePanel.style.maxHeight = Math.max(160, Math.floor(openAbove ? above : below)) + 'px';
+}
+
+function openDateTimePanel() {
+  draftStart = selectedRange.start;
+  draftEnd = selectedRange.end;
+  activeDate = 'start';
+  rangeStartTime.value = selectedRange.startTime;
+  rangeEndTime.value = selectedRange.endTime;
+  const month = draftStart ? draftStart.split('-').map(Number) : null;
+  const today = new Date();
+  calendarMonth = month ? new Date(month[0], month[1] - 1, 1) : new Date(today.getFullYear(), today.getMonth(), 1);
+  renderDateTimeCalendar();
+  dateTimePanel.hidden = false;
+  dateRangeWrap.classList.add('open');
+  dateRangeTrigger.setAttribute('aria-expanded', 'true');
+  positionDateTimePanel();
+}
+
+dateRangeTrigger.addEventListener('click', () => {
+  if (dateTimePanel.hidden) openDateTimePanel();
+  else closeDateTimePanel();
+});
+byId('previousMonth').addEventListener('click', () => {
+  calendarMonth = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() - 1, 1);
+  renderDateTimeCalendar();
+});
+byId('nextMonth').addEventListener('click', () => {
+  calendarMonth = new Date(calendarMonth.getFullYear(), calendarMonth.getMonth() + 1, 1);
+  renderDateTimeCalendar();
+});
+function selectDateTarget(target) {
+  activeDate = target;
+  const key = target === 'start' ? draftStart : draftEnd;
+  if (key) {
+    const parts = key.split('-').map(Number);
+    calendarMonth = new Date(parts[0], parts[1] - 1, 1);
+  }
+  renderDateTimeCalendar();
+}
+rangeStartDate.addEventListener('click', () => selectDateTarget('start'));
+rangeEndDate.addEventListener('click', () => selectDateTarget('end'));
+dateTimeCalendar.addEventListener('click', event => {
+  const day = event.target.closest('button[data-date]');
+  if (!day) return;
+  const key = day.dataset.date;
+  if (activeDate === 'start') {
+    draftStart = key;
+    if (!draftEnd || draftEnd < key) draftEnd = key;
+  } else {
+    draftEnd = key;
+    if (!draftStart || draftStart > key) draftStart = key;
+  }
+  const parts = key.split('-').map(Number);
+  if (parts[1] !== calendarMonth.getMonth() + 1 || parts[0] !== calendarMonth.getFullYear()) {
+    calendarMonth = new Date(parts[0], parts[1] - 1, 1);
+  }
+  renderDateTimeCalendar();
+});
+byId('clearDateTime').addEventListener('click', () => {
+  selectedRange.start = '';
+  selectedRange.end = '';
+  selectedRange.startTime = '00:00:00';
+  selectedRange.endTime = '23:59:59';
+  updateDateRangeDisplay();
+  closeDateTimePanel(true);
+});
+byId('cancelDateTime').addEventListener('click', () => closeDateTimePanel(true));
+byId('confirmDateTime').addEventListener('click', () => {
+  const startTime = rangeStartTime.value.trim();
+  const endTime = rangeEndTime.value.trim();
+  const validTime = /^([01]\d|2[0-3]):[0-5]\d:[0-5]\d$/;
+  let error = '';
+  if (!draftStart || !draftEnd) error = '请选择完整的起止日期';
+  else if (!validTime.test(startTime) || !validTime.test(endTime)) error = '时间格式应为 HH:mm:ss';
+  else if (draftStart + ' ' + startTime > draftEnd + ' ' + endTime) error = '结束时间不能早于开始时间';
+  if (error) {
+    dateTimeHint.textContent = error;
+    dateTimeHint.classList.add('error');
+    return;
+  }
+  Object.assign(selectedRange, { start: draftStart, end: draftEnd, startTime, endTime });
+  updateDateRangeDisplay();
+  closeDateTimePanel(true);
+});
+document.addEventListener('click', event => {
+  if (!dateTimePanel.hidden && !event.composedPath().includes(dateRangeWrap)) closeDateTimePanel();
+});
+document.addEventListener('keydown', event => {
+  if (event.key === 'Escape' && !dateTimePanel.hidden) {
+    closeDateTimePanel(true);
+    event.preventDefault();
+  }
+});
+window.addEventListener('resize', positionDateTimePanel);
+document.querySelector('.main').addEventListener('scroll', positionDateTimePanel, { passive: true });
+updateDateRangeDisplay();
+}
+document.querySelectorAll('.date-range-wrap').forEach(initDateRangePicker);
 </script>
 <script src="shared-basic-management.js"></script>
 </body></html>
