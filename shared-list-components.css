@@ -50,6 +50,11 @@
 .table-card thead tr,.table-card tbody tr { height: 48px; }
 .table-card th { height: 48px; padding: 0 16px; position: sticky; top: 0; z-index: 2; vertical-align: middle; background: var(--table-head-bg,#132D4A); color: var(--text-primary,var(--text)); font: 500 14px/22px var(--font-sans,var(--font)); text-align: left; white-space: nowrap; border-bottom: 1px solid var(--border-divider); }
 .table-card td { height: 48px; padding: 0 16px; vertical-align: middle; color: var(--text-secondary,var(--secondary)); font: 400 14px/22px var(--font-sans,var(--font)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-bottom: 1px solid var(--border-divider); }
+.table-tooltip { position: fixed; z-index: 1000; width: max-content; max-width: min(360px,calc(100vw - 32px)); padding: 8px 10px; border: 1px solid var(--border-default); border-radius: var(--radius-md,8px); background: var(--surface-overlay); box-shadow: var(--overlay-shadow); color: var(--text-primary); font: 400 12px/18px var(--font-sans,var(--font)); white-space: normal; overflow-wrap: anywhere; pointer-events: none; opacity: 0; visibility: hidden; transform: translateY(4px); transition: opacity 150ms ease,transform 150ms ease,visibility 150ms ease; }
+.table-tooltip::after { content: ""; position: absolute; left: var(--tooltip-arrow-left,14px); bottom: -5px; width: 8px; height: 8px; background: var(--surface-overlay); border-right: 1px solid var(--border-default); border-bottom: 1px solid var(--border-default); transform: rotate(45deg); }
+.table-tooltip.below::after { top: -5px; bottom: auto; border: 0; border-left: 1px solid var(--border-default); border-top: 1px solid var(--border-default); }
+.table-tooltip[hidden] { display: block; }
+.table-tooltip.show { opacity: 1; visibility: visible; transform: none; }
 .table-card th.num-header,.table-card td.num,.table-container th.num-header,.table-container td.num { text-align: left; }
 .table-card tbody tr:hover td { background: var(--hover-bg,var(--hover)); }
 :root[data-theme="light"] .table-card th { background: #E5EDF7; color: #172B43; }

@@ -15,8 +15,9 @@
 .date-range-demo span { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .date-range-demo i { flex:0 0 auto; color:var(--muted); font-size:12px; }
 .date-range-wrap { position:relative; }
-.date-range-tooltip { position:absolute; right:0; bottom:calc(100% + 8px); z-index:1000; width:max-content; max-width:min(400px,calc(100vw - 48px)); padding:8px 10px; border:1px solid var(--border-default); border-radius:8px; background:var(--surface-overlay); box-shadow:var(--overlay-shadow); color:var(--text-primary); font-size:12px; line-height:18px; white-space:normal; overflow-wrap:anywhere; pointer-events:none; opacity:0; visibility:hidden; transform:translateY(4px); transition:opacity 150ms ease,transform 150ms ease,visibility 150ms ease; }
-.date-range-wrap:not(.open) .date-range-demo:is(:hover,:focus) + .date-range-tooltip { opacity:1; visibility:visible; transform:none; }
+.date-range-tooltip { position:absolute; right:0; bottom:calc(100% + 8px); z-index:1000; width:max-content; max-width:min(360px,calc(100vw - 32px)); padding:8px 10px; border:1px solid var(--border-default); border-radius:var(--radius-md,8px); background:var(--surface-overlay); box-shadow:var(--overlay-shadow); color:var(--text-primary); font-size:12px; font-weight:400; line-height:18px; white-space:normal; overflow-wrap:anywhere; pointer-events:none; opacity:0; visibility:hidden; transform:translateY(4px); transition:opacity 150ms ease,transform 150ms ease,visibility 150ms ease; }
+.date-range-tooltip::after { content:""; position:absolute; left:50%; bottom:-5px; width:8px; height:8px; margin-left:-4px; background:var(--surface-overlay); border-right:1px solid var(--border-default); border-bottom:1px solid var(--border-default); transform:rotate(45deg); }
+.date-range-wrap.is-truncated:not(.open) .date-range-demo:is(:hover,:focus) + .date-range-tooltip { opacity:1; visibility:visible; transform:none; }
 .date-range-demo .placeholder { color:var(--text-muted); }
 .date-time-panel { position:absolute; top:calc(100% + 4px); right:0; z-index:1100; width:520px; max-width:calc(100vw - 48px); padding:16px; overflow:auto; border:1px solid var(--border-default); border-radius:8px; background:var(--surface-overlay); box-shadow:var(--overlay-shadow); color:var(--text-primary); }
 .date-time-panel[hidden] { display:none; }
@@ -126,8 +127,10 @@ function updateDateRangeDisplay() {
   dateRangeValue.textContent = value;
   dateRangeValue.classList.toggle('placeholder', !hasRange);
   dateRangeTooltip.textContent = value;
-  dateRangeTooltip.hidden = !hasRange;
-  if (hasRange) dateRangeTrigger.setAttribute('aria-describedby', 'date-range-tooltip' + suffix);
+  const isTruncated = hasRange && dateRangeValue.scrollWidth > dateRangeValue.clientWidth;
+  dateRangeWrap.classList.toggle('is-truncated', isTruncated);
+  dateRangeTooltip.hidden = !isTruncated;
+  if (isTruncated) dateRangeTrigger.setAttribute('aria-describedby', 'date-range-tooltip' + suffix);
   else dateRangeTrigger.removeAttribute('aria-describedby');
 }
 
@@ -254,7 +257,10 @@ document.addEventListener('keydown', event => {
     event.preventDefault();
   }
 });
-window.addEventListener('resize', positionDateTimePanel);
+window.addEventListener('resize', () => {
+  updateDateRangeDisplay();
+  positionDateTimePanel();
+});
 document.querySelector('.main').addEventListener('scroll', positionDateTimePanel, { passive: true });
 updateDateRangeDisplay();
 }
