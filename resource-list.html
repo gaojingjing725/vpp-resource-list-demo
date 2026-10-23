@@ -1178,7 +1178,7 @@ td.date {}
 /* 固定列列宽 — 必须显式设定以保证 sticky offset 计算准确 */
 th.col-fixed-checkbox, td.col-fixed-checkbox { width: 48px; min-width: 48px; }
 th.col-fixed-name,     td.col-fixed-name     { width: 180px; min-width: 180px; }
-th.col-fixed-ops,      td.col-fixed-ops      { width: 100px; min-width: 100px; }
+th.col-fixed-ops,      td.col-fixed-ops      { width: 128px; min-width: 128px; }
 
 /* 左固定列基础 */
 th.col-fixed-left, td.col-fixed-left {
@@ -1335,6 +1335,18 @@ thead th.col-fixed-right {
 
 .action-link:active {
   color: var(--primary-500);
+}
+
+.action-link--danger {
+  color: var(--red-500);
+}
+
+.action-link--danger:hover {
+  color: var(--red-400);
+}
+
+.action-link--danger:active {
+  color: var(--red-700);
 }
 
 .action-separator {
@@ -2708,7 +2720,9 @@ function renderTable() {
           <td class="date">${row.updateTime}</td>
           <td class="col-fixed-right col-fixed-ops col-first-right-fixed">
             <div class="action-links">
-              <button class="action-link" onclick="openEditModal(${row.id})">编辑</button>
+              <button class="action-link" type="button" onclick="openEditModal(${row.id})">编辑</button>
+              <span class="action-separator" aria-hidden="true"></span>
+              <button class="action-link action-link--danger" type="button" onclick="openDeleteModal(${row.id})">删除</button>
             </div>
           </td>
         </tr>`;
